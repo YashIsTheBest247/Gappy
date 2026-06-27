@@ -1,0 +1,34 @@
+{
+  "name": "reply-coach",
+  "description": "Second-opinion QA reviewer. Grades a proposed support reply for tone, accuracy against the knowledge base, and completeness, then returns a score and a ship/revise/escalate verdict. Read-only.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "ticket_id": { "type": "string" },
+      "draft_id": { "type": "string" }
+    },
+    "required": ["ticket_id", "draft_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "score": { "type": "integer", "description": "0-100 overall quality." },
+      "verdict": { "type": "string", "enum": ["ship", "revise", "escalate"] },
+      "tone": { "type": "string", "enum": ["warm", "professional", "flat", "off"] },
+      "grounding": { "type": "string", "enum": ["grounded", "partial", "unsupported"] },
+      "issues": { "type": "array", "items": { "type": "string" } },
+      "suggestion": { "type": "string", "description": "One concrete improvement." }
+    },
+    "required": ["score", "verdict", "tone", "grounding", "issues", "suggestion"]
+  },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "messages", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "drafts", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "folder", "resource_name": "/knowledge", "permission_ids": ["folder.read"] }
+    ]
+  }
+}

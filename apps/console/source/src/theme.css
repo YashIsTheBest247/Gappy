@@ -358,6 +358,34 @@ input, textarea, select { font-family: inherit; }
   }
 }
 
+/* ---------- QA review ---------- */
+.qa-card { border: 1px solid var(--line); }
+.qa-top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+.qa-score { font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--ink); }
+.qa-score span { font-size: 15px; font-weight: 600; color: var(--muted); }
+.qa-verdict { text-transform: capitalize; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: var(--radius-pill); }
+.qa-verdict.v-ship, .qa-score.v-ship { background: var(--mint-bg); color: var(--mint-ink); }
+.qa-verdict.v-revise, .qa-score.v-revise { background: var(--amber-bg); color: var(--amber-ink); }
+.qa-verdict.v-escalate, .qa-score.v-escalate { background: var(--rose-bg); color: var(--rose-ink); }
+.qa-score.v-ship, .qa-score.v-revise, .qa-score.v-escalate { background: transparent; }
+.qa-score.v-ship { color: var(--mint-ink); }
+.qa-score.v-revise { color: var(--amber-ink); }
+.qa-score.v-escalate { color: var(--rose-ink); }
+.qa-issues { margin: 6px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 13px; }
+.qa-issues li { margin-bottom: 5px; }
+.qa-suggest { margin-top: 12px; background: var(--accent-soft); color: var(--ink); border-radius: 14px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5; }
+
+/* ---------- Insight bars ---------- */
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 11px; }
+.bar-label { width: 116px; flex: 0 0 116px; font-size: 13px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 10px; background: var(--surface-2); border-radius: var(--radius-pill); overflow: hidden; }
+.bar-fill { height: 100%; border-radius: var(--radius-pill); transform-origin: left; }
+@media (prefers-reduced-motion: no-preference) {
+  .bar-fill { animation: barGrow .7s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+}
+.bar-value { width: 30px; text-align: right; font-size: 13px; font-weight: 700; color: var(--ink); }
+
 /* ---------- Assistant chat ---------- */
 .chat-card { padding: 0; overflow: hidden; height: min(72vh, 740px); display: flex; }
 .chat { display: flex; flex-direction: column; width: 100%; min-width: 0; }

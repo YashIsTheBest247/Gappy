@@ -7,12 +7,14 @@ import TicketPage from "./pages/TicketPage";
 import KnowledgePage from "./pages/KnowledgePage";
 import AssistantPage from "./pages/AssistantPage";
 import NewTicketPage from "./pages/NewTicketPage";
+import InsightsPage from "./pages/InsightsPage";
 import { Toaster } from "./lib/toast";
 import { Logo } from "./lib/Logo";
 
 const NAV = [
   { key: "queue", label: "Queue", href: "#/queue" },
   { key: "review", label: "Review", href: "#/review" },
+  { key: "insights", label: "Insights", href: "#/insights" },
   { key: "knowledge", label: "Knowledge", href: "#/knowledge" },
   { key: "assistant", label: "Assistant", href: "#/assistant" },
 ];
@@ -82,6 +84,7 @@ export default function App() {
           <div className="route-view" key={route.name === "ticket" ? `ticket-${route.id}` : route.name}>
             {route.name === "queue" && <QueuePage />}
             {route.name === "review" && <ReviewPage />}
+            {route.name === "insights" && <InsightsPage />}
             {route.name === "ticket" && <TicketPage id={route.id} />}
             {route.name === "knowledge" && <KnowledgePage />}
             {route.name === "assistant" && <AssistantPage />}

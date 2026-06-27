@@ -25,7 +25,9 @@ function TicketRow({ t }: { t: Ticket }) {
         </div>
       </div>
       <div className="row-meta">
-        {sla?.overdue && <Badge variant="ember">{sla.label}</Badge>}
+        {sla && !["answered", "closed"].includes(t.status) && (
+          <Badge variant={sla.overdue ? "ember" : "outline"}>{sla.label}</Badge>
+        )}
         <Badge variant="outline">{CHANNEL_LABEL[t.channel] ?? t.channel}</Badge>
         <PriorityTag priority={t.priority} />
         <StatusPill status={t.status} />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, Draft,
+  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, useTickets, useQuality, Draft, Ticket,
 } from "../lib/podData";
 import { Card, Btn, Badge, StatusPill, PriorityTag, CategoryTag, Avatar, Loading, Empty } from "../lib/ui";
 import { go } from "../lib/router";
@@ -147,6 +147,76 @@ function Timeline({ ticketId }: { ticketId: string }) {
   );
 }
 
+const STOP = new Set("the a an to of for is are i we you my our your it this that and or with on in be can how do does my".split(" "));
+function keywords(s?: string): string[] {
+  return (s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
+}
+
+function Similar({ ticket }: { ticket: Ticket }) {
+  const { tickets } = useTickets();
+  const kw = new Set(keywords(`${ticket.subject} ${ticket.summary ?? ""}`));
+  const scored = tickets
+    .filter((t) => t.id !== ticket.id)
+    .map((t) => {
+      const overlap = keywords(`${t.subject} ${t.summary ?? ""}`).filter((w) => kw.has(w)).length;
+      const score = overlap * 2 + (t.category === ticket.category ? 1 : 0);
+      return { t, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+
+  if (scored.length === 0) return null;
+  return (
+    <Card className="compact">
+      <h3 style={{ fontSize: 18, marginBottom: 14 }}>Similar tickets</h3>
+      <div className="grid" style={{ gap: 8 }}>
+        {scored.map(({ t }) => (
+          <div key={t.id} className="row" style={{ padding: "12px 16px" }} onClick={() => go(`#/ticket/${t.id}`)}>
+            <div className="row-num">#{t.number ?? "—"}</div>
+            <div className="row-main">
+              <div className="row-subject" style={{ fontSize: 14 }}>{t.subject}</div>
+            </div>
+            <StatusPill status={t.status} />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+const VERDICT_CLASS: Record<string, string> = { ship: "v-ship", revise: "v-revise", escalate: "v-escalate" };
+
+function QAReview({ ticketId }: { ticketId: string }) {
+  const { quality } = useQuality(ticketId);
+  if (!quality) return null;
+  const v = quality.verdict ?? "revise";
+  return (
+    <Card className="compact qa-card">
+      <div className="between" style={{ marginBottom: 14 }}>
+        <h3 style={{ fontSize: 18 }}>AI quality check</h3>
+        <span className={`qa-verdict ${VERDICT_CLASS[v] ?? "v-revise"}`}>{v}</span>
+      </div>
+      <div className="qa-top">
+        <div className={`qa-score ${VERDICT_CLASS[v] ?? "v-revise"}`}>
+          {quality.score ?? "—"}<span>/100</span>
+        </div>
+        <div className="wrap">
+          {quality.tone && <Badge variant="outline">tone: {quality.tone}</Badge>}
+          {quality.grounding && <Badge variant="outline">{quality.grounding}</Badge>}
+        </div>
+      </div>
+      {(quality.issues ?? []).length > 0 && (
+        <ul className="qa-issues">
+          {(quality.issues ?? []).map((it, i) => <li key={i}>{it}</li>)}
+        </ul>
+      )}
+      {quality.suggestion && <div className="qa-suggest">💡 {quality.suggestion}</div>}
+      <p className="muted-text" style={{ fontSize: 12, marginTop: 12 }}>Second-opinion review by the reply-coach agent.</p>
+    </Card>
+  );
+}
+
 export default function TicketPage({ id }: { id: string }) {
   const { ticket, isLoading } = useTicket(id);
   const { drafts } = useDrafts(id);
@@ -200,8 +270,12 @@ export default function TicketPage({ id }: { id: string }) {
             <Conversation ticketId={ticket.id} />
           </Card>
           <DraftPanel ticketId={ticket.id} draft={latest} />
+          <QAReview ticketId={ticket.id} />
         </div>
-        <Timeline ticketId={ticket.id} />
+        <div className="grid" style={{ gap: 20 }}>
+          <Similar ticket={ticket} />
+          <Timeline ticketId={ticket.id} />
+        </div>
       </div>
     </div>
   );

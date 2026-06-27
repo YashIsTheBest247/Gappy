@@ -31,6 +31,10 @@ export type Draft = {
 export type TicketEvent = {
   id: string; ticket_id: string; kind: string; actor?: string; detail?: string; created_at?: string;
 };
+export type Quality = {
+  id: string; ticket_id: string; draft_id: string; score?: number;
+  verdict?: string; tone?: string; grounding?: string; issues?: string[]; suggestion?: string; created_at?: string;
+};
 
 type Filter = { field: string; op: string; value?: unknown };
 const byTicket = (ticketId: string): Filter[] => [{ field: "ticket_id", op: "eq", value: ticketId }];
@@ -93,6 +97,23 @@ export function useFunctionRunner(functionName: string) {
     output: (fn.finalOutput ?? fn.output) as Record<string, unknown> | null,
     error: fn.error,
   };
+}
+
+/** Latest QA verdict for a ticket (from the reply-coach agent). */
+export function useQuality(ticketId?: string) {
+  const { records, isLoading } = useRecords<Quality>({
+    client, podId, tableName: "quality", limit: 20,
+    filters: ticketId ? byTicket(ticketId) : [],
+    sort: [{ field: "created_at", direction: "desc" }],
+    enabled: Boolean(ticketId),
+  });
+  return { quality: records?.[0] ?? null, isLoading };
+}
+
+/** All QA rows, for desk-wide quality metrics. */
+export function useAllQuality() {
+  const { records, isLoading } = useRecords<Quality>({ client, podId, tableName: "quality", limit: 500 });
+  return { quality: records ?? [], isLoading };
 }
 
 /** Starts the `intake` workflow (triage -> draft) for a ticket, submitting ticket_id to its entry form. */

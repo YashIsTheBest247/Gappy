@@ -68,6 +68,36 @@
         }
       }
     },
+    {
+      "id": "qa",
+      "type": "AGENT",
+      "label": "QA the draft (reply-coach)",
+      "config": {
+        "agent_name": "reply-coach",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" },
+          "draft_id": { "type": "expression", "value": "persist_draft.draft_id" }
+        }
+      }
+    },
+    {
+      "id": "persist_qa",
+      "type": "FUNCTION",
+      "label": "Save QA verdict",
+      "config": {
+        "function_name": "save_quality",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" },
+          "draft_id": { "type": "expression", "value": "persist_draft.draft_id" },
+          "score": { "type": "expression", "value": "qa.score" },
+          "verdict": { "type": "expression", "value": "qa.verdict" },
+          "tone": { "type": "expression", "value": "qa.tone" },
+          "grounding": { "type": "expression", "value": "qa.grounding" },
+          "issues": { "type": "expression", "value": "qa.issues" },
+          "suggestion": { "type": "expression", "value": "qa.suggestion" }
+        }
+      }
+    },
     { "id": "done", "type": "END", "label": "Awaiting approval" }
   ],
   "edges": [
@@ -75,7 +105,9 @@
     { "id": "e1", "source": "triage", "target": "persist_triage" },
     { "id": "e2", "source": "persist_triage", "target": "draft" },
     { "id": "e3", "source": "draft", "target": "persist_draft" },
-    { "id": "e4", "source": "persist_draft", "target": "done" }
+    { "id": "e4", "source": "persist_draft", "target": "qa" },
+    { "id": "e5", "source": "qa", "target": "persist_qa" },
+    { "id": "e6", "source": "persist_qa", "target": "done" }
   ],
   "visibility": "POD"
 }

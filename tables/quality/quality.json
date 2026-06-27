@@ -1,0 +1,15 @@
+{
+  "name": "quality",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Ticket the reviewed draft belongs to." },
+    { "name": "draft_id", "type": "UUID", "required": true, "description": "Draft that was reviewed." },
+    { "name": "score", "type": "INTEGER", "description": "Overall quality score 0-100 from the reply-coach agent." },
+    { "name": "verdict", "type": "ENUM", "options": ["ship", "revise", "escalate"], "description": "ship = good to send, revise = needs edits, escalate = hand to a human." },
+    { "name": "tone", "type": "ENUM", "options": ["warm", "professional", "flat", "off"], "description": "Tone assessment of the draft." },
+    { "name": "grounding", "type": "ENUM", "options": ["grounded", "partial", "unsupported"], "description": "How well the reply is backed by the knowledge base." },
+    { "name": "issues", "type": "JSON", "description": "Array of specific problems the coach found." },
+    { "name": "suggestion", "type": "TEXT", "description": "One concrete improvement." }
+  ]
+}
