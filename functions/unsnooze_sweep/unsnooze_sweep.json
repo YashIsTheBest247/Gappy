@@ -1,0 +1,12 @@
+{
+  "name": "unsnooze_sweep",
+  "description": "Removes expired snoozes so their tickets resurface in the queue. Runs on a cron.",
+  "type": "API",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "snoozes", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
+      { "resource_type": "datastore_table", "resource_name": "ticket_events", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
+    ]
+  }
+}

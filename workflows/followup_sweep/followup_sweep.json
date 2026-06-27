@@ -1,0 +1,11 @@
+{
+  "name": "followup_sweep",
+  "description": "Drafts polite follow-ups for answered tickets that went quiet. Runs on a recurring cron schedule.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    { "id": "sweep", "type": "FUNCTION", "label": "Draft follow-ups", "config": { "function_name": "followup_sweep" } },
+    { "id": "done", "type": "END", "label": "Done" }
+  ],
+  "edges": [ { "id": "e1", "source": "sweep", "target": "done" } ],
+  "visibility": "POD"
+}

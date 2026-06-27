@@ -49,11 +49,14 @@ All of step 2–4 happens **autonomously the moment a ticket arrives** — no hu
 - **Fully autonomous pipeline** — a datastore schedule runs triage → draft → QA the instant any ticket arrives, from any source, with no human trigger
 - **Autopilot** — one click auto-sends every draft the QA agent rated *ship* (≥90); humans only handle the rest
 - **SLA auto-escalation** — a cron job escalates any open ticket past its SLA
+- **Follow-up autopilot** — a daily cron finds tickets answered a while ago with no customer reply and drafts a polite check-in, moving them back into Review so nothing goes quietly cold
+- **Proactive churn-save** — a daily cron scans for at-risk customers (low CSAT, negative sentiment on hot tickets) and *opens its own retention ticket* with a drafted outreach for one-click approval — support that reaches out before the customer churns
 - **Daily Briefing** — a `digest` agent writes an executive summary of the whole desk, on a 9 am cron and on-demand, alongside a live activity feed
 
 **Channels & intake**
 - **Live Telegram agent** ([@tend_support_bot](https://t.me/tend_support_bot)) — a customer-facing agent answers from your docs and logs tickets straight into the desk
 - **Multimodal intake** — drop a PDF, email, or screenshot on the New Ticket form; the `intake-parser` agent extracts a clean ticket from it
+- **Multilingual replies** — the draft agent detects the customer's language and answers in it natively, with an English translation appended so the human reviewer can verify before sending
 - Email, in-app form, and Slack all feed the same pipeline
 
 **Intelligence**
@@ -62,12 +65,19 @@ All of step 2–4 happens **autonomously the moment a ticket arrives** — no hu
 - **Self-improving knowledge base** — the `kb-writer` agent drafts a new article from an unanswered ticket and publishes it back into the RAG store, so the next identical question answers itself
 - **Customers (CRM)** — every ticket grouped by person, with history, repeat-contact and at-risk flags
 - **CSAT** — capture a 1–5 customer rating per ticket; surfaced on Insights
+- **Duplicate detection + merge** — the ticket view surfaces other open tickets from the same customer and merges them into one thread (moving messages over, closing the duplicate) in one click
 - **Similar tickets** + **SLA tracking** with at-risk highlighting
 
 **Operator UX**
 - **⌘K command palette** — search tickets, navigate, run actions
 - **Bulk actions** — multi-select tickets to escalate or re-run the AI
 - **Assignment** — assign tickets to yourself, plus a "Mine" queue filter
+- **Inline tag editor** — add/remove tags on a ticket; filter and search the queue by tag
+- **Snooze** — hide a ticket until a chosen time; a 15-minute cron auto-un-snoozes it back into the queue
+- **Keyboard-first queue** — `j`/`k` to move, `enter` to open, `/` to search, `n` for a new ticket; highlighted-row navigation
+- **Saved views** — pin any filter + priority + search combo as a one-click chip
+- **CSV export** — download the current filtered queue as a spreadsheet
+- **Theme accent picker** — choose the app's accent colour (green/blue/violet/rose/amber/teal), persisted and applied flash-free
 - **Concierge assistant** — a read-only AI you can ask about the queue or docs
 - Dark mode (flash-free), fully responsive, smooth transitions, `prefers-reduced-motion` aware, soft pastel design system with a custom logo
 
@@ -103,12 +113,12 @@ Tend is a single **Lemma pod** — `support-desk` — that uses essentially the 
 
 | Lemma primitive | Used for |
 |---|---|
-| **Tables** (8) | `tickets`, `messages`, `drafts`, `ticket_events`, `quality`, `reports`, `csat`, `macros` |
+| **Tables** (9) | `tickets`, `messages`, `drafts`, `ticket_events`, `quality`, `reports`, `csat`, `macros`, `snoozes` |
 | **Files / RAG** | `/knowledge` (self-improving doc store the agents ground in) + `/inbox` (multimodal uploads) |
-| **Agents** (8) | `triage-agent`, `draft-agent`, `reply-coach`, `kb-writer`, `frontline`, `concierge`, `digest`, `intake-parser` |
-| **Functions** (11) | `intake_ticket`, `apply_triage`, `save_draft`, `decide_reply`, `escalate_ticket`, `save_quality`, `publish_kb`, `save_digest`, `sla_sweep`, `record_csat`, `assign_ticket` |
-| **Workflows** (6) | `intake`, `auto_intake`, `write_kb`, `daily_digest`, `sla_sweep`, `parse_intake` |
-| **Schedules** (3) | a DATASTORE trigger (`auto-intake`, the autonomy) + two TIME crons (`daily-briefing` 9 am, `sla-sweep` every 30 min) |
+| **Agents** (8) | `triage-agent`, `draft-agent` (multilingual), `reply-coach`, `kb-writer`, `frontline`, `concierge`, `digest`, `intake-parser` |
+| **Functions** (17) | `intake_ticket`, `apply_triage`, `save_draft`, `decide_reply`, `escalate_ticket`, `save_quality`, `publish_kb`, `save_digest`, `sla_sweep`, `record_csat`, `assign_ticket`, `set_tags`, `snooze_ticket`, `unsnooze_sweep`, `followup_sweep`, `churn_sweep`, `merge_tickets` |
+| **Workflows** (9) | `intake`, `auto_intake`, `write_kb`, `daily_digest`, `sla_sweep`, `parse_intake`, `unsnooze_sweep`, `followup_sweep`, `churn_sweep` |
+| **Schedules** (6) | a DATASTORE trigger (`auto-intake`, the autonomy) + five TIME crons: `daily-briefing` (9 am), `sla-sweep` (every 30 min), `unsnooze` (every 15 min), `followup` (10 am), `churn` (8 am) |
 | **Surface** | live **Telegram** bot ([@tend_support_bot](https://t.me/tend_support_bot)) bound to the `frontline` agent |
 | **App** | Vite + React + `lemma-sdk` console — 9 pages (Queue, Review, Insights, Customers, Briefing, Knowledge, Assistant, New ticket, Ticket detail) |
 
@@ -164,6 +174,12 @@ lemma functions permissions replace save_digest    -f grants/savedigest.json
 lemma functions permissions replace sla_sweep      -f grants/slasweep.json
 lemma functions permissions replace record_csat    -f grants/recordcsat.json
 lemma functions permissions replace assign_ticket  -f grants/assign.json
+lemma functions permissions replace set_tags       -f grants/settags.json
+lemma functions permissions replace snooze_ticket  -f grants/snooze.json
+lemma functions permissions replace unsnooze_sweep -f grants/snooze.json
+lemma functions permissions replace followup_sweep -f grants/followup.json
+lemma functions permissions replace churn_sweep    -f grants/churn.json
+lemma functions permissions replace merge_tickets  -f grants/merge.json
 ```
 > Tip: re-importing a resource wipes its grants — reapply after any import.
 
@@ -184,6 +200,12 @@ lemma schedules create --workflow auto_intake  --datastore tickets --on insert -
 lemma schedules create --workflow daily_digest --cron "0 9 * * *"   --name daily-briefing
 # SLA enforcement every 30 minutes
 lemma schedules create --workflow sla_sweep    --cron "*/30 * * * *" --name sla-sweep
+# auto-un-snooze tickets whose snooze has elapsed (every 15 minutes)
+lemma schedules create --workflow unsnooze_sweep --cron "*/15 * * * *" --name unsnooze
+# follow-up autopilot — check answered-but-silent tickets daily at 10am
+lemma schedules create --workflow followup_sweep --cron "0 10 * * *"   --name followup
+# proactive churn-save — scan for at-risk customers daily at 8am
+lemma schedules create --workflow churn_sweep    --cron "0 8 * * *"    --name churn
 
 # live Telegram agent (use a BotFather bot token via the dashboard for a public handle)
 lemma surfaces upsert TELEGRAM --agent frontline --credential-mode CUSTOM --account <telegram-account-id> --enabled
@@ -208,10 +230,10 @@ bash seed/seed.sh
 ```
 support-desk/
 ├── pod.json
-├── tables/            # tickets, messages, drafts, ticket_events, quality, reports, csat, macros
-├── functions/         # *.json + code.py  (11 Python functions)
+├── tables/            # tickets, messages, drafts, ticket_events, quality, reports, csat, macros, snoozes
+├── functions/         # *.json + code.py  (17 Python functions)
 ├── agents/            # *.json + instruction.txt  (8 agents)
-├── workflows/         # intake, auto_intake, write_kb, daily_digest, sla_sweep, parse_intake
+├── workflows/         # intake, auto_intake, write_kb, daily_digest, sla_sweep, parse_intake, unsnooze_sweep, followup_sweep, churn_sweep
 ├── knowledge/         # .txt KB docs (RAG source)
 ├── grants/            # server-side permission payloads (applied after import)
 ├── seed/              # seed.sh + a sample inbound document

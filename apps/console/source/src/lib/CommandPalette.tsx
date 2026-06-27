@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTickets } from "./podData";
 import { go } from "./router";
 import { STATUS_LABEL } from "./format";
+import { ACCENTS, setAccent } from "./extras";
 
 type Item = { id: string; label: string; hint?: string; group: string; run: () => void };
 
@@ -35,6 +36,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id: "a-new", label: "New ticket", hint: "create & run AI", group: "Actions", run: close(() => go("#/new")) },
       { id: "a-theme", label: "Toggle light / dark", group: "Actions", run: close(toggleTheme) },
     ];
+    const appearance: Item[] = ACCENTS.map((acc) => ({
+      id: `acc-${acc.value}`, label: `Accent: ${acc.name}`, hint: "theme color", group: "Appearance",
+      run: close(() => setAccent(acc.value)),
+    }));
     const ql = q.trim().toLowerCase();
     const tix: Item[] = tickets
       .filter((t) => !ql || [t.subject, t.customer_name, t.summary, t.category, `#${t.number}`]
@@ -46,7 +51,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         run: () => { go(`#/ticket/${t.id}`); onClose(); },
       }));
 
-    const all = [...nav, ...actions, ...tix];
+    const all = [...nav, ...actions, ...appearance, ...tix];
     if (!ql) return all;
     return all.filter((it) => it.label.toLowerCase().includes(ql) || it.group.toLowerCase().includes(ql) || it.id.startsWith("t-"));
   }, [q, tickets, onClose]);

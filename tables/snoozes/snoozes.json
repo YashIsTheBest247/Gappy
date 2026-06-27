@@ -1,0 +1,10 @@
+{
+  "name": "snoozes",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Snoozed ticket." },
+    { "name": "until", "type": "DATETIME", "required": true, "description": "When the ticket resurfaces." },
+    { "name": "reason", "type": "TEXT", "description": "Optional note." }
+  ]
+}

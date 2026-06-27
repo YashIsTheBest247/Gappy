@@ -43,6 +43,7 @@ export type Report = {
 };
 export type Csat = { id: string; ticket_id: string; rating?: number; comment?: string; created_at?: string };
 export type Macro = { id: string; name: string; body: string; category?: string };
+export type Snooze = { id: string; ticket_id: string; until?: string; reason?: string };
 
 type Filter = { field: string; op: string; value?: unknown };
 const byTicket = (ticketId: string): Filter[] => [{ field: "ticket_id", op: "eq", value: ticketId }];
@@ -152,6 +153,14 @@ export function useAllQuality() {
 export function useMe() {
   const { user } = useCurrentUser({ client });
   return { me: user as any, id: (user as any)?.id as string | undefined };
+}
+
+/** Currently-snoozed ticket ids (until is in the future). */
+export function useSnoozes() {
+  const { records } = useLiveRecords<Snooze>({ client, podId, tableName: "snoozes", limit: 500 });
+  const now = Date.now();
+  const active = (records ?? []).filter((s) => s.until && new Date(s.until).getTime() > now);
+  return { snoozedIds: new Set(active.map((s) => s.ticket_id)), count: active.length };
 }
 
 /** Canned reply macros. */

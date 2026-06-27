@@ -195,6 +195,51 @@ function Similar({ ticket }: { ticket: Ticket }) {
   );
 }
 
+function Duplicates({ ticket }: { ticket: Ticket }) {
+  const { tickets } = useTickets();
+  const merge = useFunctionRunner("merge_tickets");
+  const [mergedIds, setMergedIds] = useState<Set<string>>(new Set());
+  const email = (ticket.customer_email ?? "").toLowerCase();
+  if (!email) return null;
+
+  const dupes = tickets.filter(
+    (t) => t.id !== ticket.id
+      && (t.customer_email ?? "").toLowerCase() === email
+      && !["closed", "answered"].includes(t.status)
+      && !mergedIds.has(t.id)
+  );
+  if (dupes.length === 0) return null;
+
+  async function doMerge(dupId: string, num?: number) {
+    await merge.run({ primary_id: ticket.id, duplicate_id: dupId });
+    setMergedIds((s) => new Set(s).add(dupId));
+    toast(`Merged #${num ?? "?"} into this ticket`, "ok");
+  }
+
+  return (
+    <Card className="compact" style={{ borderColor: "var(--accent)" }}>
+      <div className="between" style={{ marginBottom: 6 }}>
+        <h3 style={{ fontSize: 18 }}>Possible duplicates</h3>
+        <Badge variant="ember">{dupes.length}</Badge>
+      </div>
+      <p className="muted-text" style={{ fontSize: 13, marginBottom: 12 }}>
+        Same customer has other open tickets. Merge them in to keep one thread.
+      </p>
+      <div className="grid" style={{ gap: 8 }}>
+        {dupes.map((t) => (
+          <div key={t.id} className="card-row" style={{ flexWrap: "nowrap", gap: 10 }}>
+            <div className="row-num">#{t.number ?? "—"}</div>
+            <div className="row-main" style={{ cursor: "pointer" }} onClick={() => go(`#/ticket/${t.id}`)}>
+              <div className="row-subject" style={{ fontSize: 14 }}>{t.subject}</div>
+            </div>
+            <Btn size="sm" variant="soft" disabled={merge.busy} onClick={() => doMerge(t.id, t.number)}>Merge in</Btn>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 const VERDICT_CLASS: Record<string, string> = { ship: "v-ship", revise: "v-revise", escalate: "v-escalate" };
 
 function QAReview({ ticketId }: { ticketId: string }) {
@@ -262,6 +307,31 @@ function CsatWidget({ ticket }: { ticket: Ticket }) {
   );
 }
 
+function TagsEditor({ ticket }: { ticket: Ticket }) {
+  const setTags = useFunctionRunner("set_tags");
+  const [tags, setTagsState] = useState<string[]>(ticket.tags ?? []);
+  const [input, setInput] = useState("");
+  useEffect(() => { setTagsState(ticket.tags ?? []); }, [ticket.id]);
+  const save = (next: string[]) => { setTagsState(next); setTags.run({ ticket_id: ticket.id, tags: next }); };
+  const add = () => { const t = input.trim().toLowerCase(); if (t && !tags.includes(t)) save([...tags, t]); setInput(""); };
+  return (
+    <Card className="compact">
+      <h3 style={{ fontSize: 18, marginBottom: 12 }}>Tags</h3>
+      <div className="wrap" style={{ marginBottom: 12 }}>
+        {tags.map((t) => (
+          <span key={t} className="badge">{t}<span style={{ cursor: "pointer", opacity: 0.7, marginLeft: 2 }} onClick={() => save(tags.filter((x) => x !== t))}>×</span></span>
+        ))}
+        {tags.length === 0 && <span className="muted-text" style={{ fontSize: 13 }}>No tags yet.</span>}
+      </div>
+      <div className="card-row" style={{ flexWrap: "nowrap" }}>
+        <input className="input" value={input} onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") add(); }} placeholder="Add a tag…" />
+        <Btn size="sm" variant="soft" onClick={add}>Add</Btn>
+      </div>
+    </Card>
+  );
+}
+
 export default function TicketPage({ id }: { id: string }) {
   const { ticket, isLoading } = useTicket(id);
   const { drafts } = useDrafts(id);
@@ -270,6 +340,7 @@ export default function TicketPage({ id }: { id: string }) {
   const kb = useWriteKbWorkflow();
   const me = useMe();
   const assign = useFunctionRunner("assign_ticket");
+  const snooze = useFunctionRunner("snooze_ticket");
   const latest = drafts[0] ?? null;
   const sla = slaState(ticket?.sla_due_at);
 
@@ -311,6 +382,10 @@ export default function TicketPage({ id }: { id: string }) {
                onClick={async () => { await escalate.run({ ticket_id: ticket.id, reason: "Manually escalated from console." }); toast("Ticket escalated", "info"); }}>
             Escalate
           </Btn>
+          <Btn variant="soft" size="sm" disabled={snooze.busy}
+               onClick={async () => { await snooze.run({ ticket_id: ticket.id, hours: 24 }); toast("Snoozed for 1 day", "info"); }}>
+            Snooze 1d
+          </Btn>
         </div>
       </div>
 
@@ -334,6 +409,8 @@ export default function TicketPage({ id }: { id: string }) {
           <CsatWidget ticket={ticket} />
         </div>
         <div className="grid" style={{ gap: 20 }}>
+          <Duplicates ticket={ticket} />
+          <TagsEditor ticket={ticket} />
           <Similar ticket={ticket} />
           <Timeline ticketId={ticket.id} />
         </div>

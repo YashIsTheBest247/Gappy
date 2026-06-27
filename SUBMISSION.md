@@ -26,13 +26,19 @@ it does the work:
 - **Track status & SLA** — full lifecycle, audit trail, SLA timers, and a live analytics dashboard.
 - **Escalate for review** — human-in-the-loop approval by default; **Autopilot** auto-sends only what the QA agent is confident in.
 
-Two things make it stand out:
+Four things make it stand out:
 
 1. **It's autonomous.** A datastore schedule runs the entire triage → draft → QA pipeline the moment a
    ticket arrives from *any* channel — including a **live Telegram bot** a customer can message directly.
 2. **It improves itself.** When the AI isn't confident, Tend flags a *knowledge gap* and an agent
    **writes a new KB article** and publishes it back into the RAG store — so the next identical question
    answers automatically.
+3. **It reaches out before customers churn.** A daily **churn-save** cron scans for at-risk customers
+   (low CSAT, frustration on hot tickets) and *opens its own retention ticket* with a personalized,
+   AI-drafted outreach — proactive support, not reactive. A **follow-up autopilot** likewise chases
+   answered-but-silent tickets so nothing goes quietly cold.
+4. **It speaks the customer's language.** The draft agent replies natively in the customer's language
+   with an English translation appended for the human reviewer.
 
 ## How to try it
 
@@ -48,8 +54,8 @@ Two things make it stand out:
 
 ## Lemma SDK usage
 
-Tend uses essentially the entire platform: **8 tables**, **Files + RAG** (self-improving), **8 agents**,
-**11 functions**, **6 workflows**, **3 schedules** (a datastore trigger + two crons), a **live Telegram surface**,
+Tend uses essentially the entire platform: **9 tables**, **Files + RAG** (self-improving), **8 agents**,
+**17 functions**, **9 workflows**, **6 schedules** (a datastore trigger + five crons), a **live Telegram surface**,
 and a **deployed 9-page app**. Architecture detail in [ARCHITECTURE.md](ARCHITECTURE.md); setup in [README.md](README.md).
 
 

@@ -3,7 +3,7 @@
 Tend is a single **Lemma pod** (`support-desk`). This document describes the data model, the
 agents, the autonomous pipeline, the channels, and the design decisions behind it.
 
-At a glance: **8 tables · 8 agents · 11 functions · 6 workflows · 3 schedules · 1 live surface · a deployed app.**
+At a glance: **9 tables · 8 agents · 17 functions · 9 workflows · 6 schedules · 1 live surface · a deployed app.**
 
 ---
 
@@ -14,7 +14,7 @@ are by `*_id` convention (foreign keys were intentionally dropped; see §6).
 
 | Table | Key columns |
 |---|---|
-| **tickets** | `number` (serial), `subject`, `body_preview`, `channel`, `customer_name/email`, `status`(new→triaged→awaiting_approval→answered / escalated / closed), `priority`, `category`, `sentiment`, `summary`, `tags`(json), `assignee_user_id`, `confidence`(float), `sla_due_at`, `first_response_at`, `resolved_at` |
+| **tickets** | `number` (serial), `subject`, `body_preview`, `channel`, `customer_name/email`, `status`(new→triaged→awaiting_approval→answered / escalated / closed), `priority`, `category`, `sentiment`, `summary`, `tags`(json), `assignee_user_id`, `related_ticket_id`(dedupe link), `confidence`(float), `sla_due_at`, `first_response_at`, `resolved_at` |
 | **messages** | `ticket_id`, `direction`(inbound/outbound/internal), `channel`, `author`, `body` |
 | **drafts** | `ticket_id`, `version`, `body`, `citations`(json), `confidence`, `status`(proposed/approved/rejected/sent), `reviewer_user_id`, `review_notes` |
 | **ticket_events** | `ticket_id`, `kind`, `actor`, `detail` — the audit trail and live activity feed |
@@ -22,6 +22,7 @@ are by `*_id` convention (foreign keys were intentionally dropped; see §6).
 | **reports** | `headline`, `body`, `highlights`(json), `period` — generated executive briefings |
 | **csat** | `ticket_id`, `rating`(1-5), `comment` — customer satisfaction |
 | **macros** | `name`, `body`, `category` — canned reply snippets |
+| **snoozes** | `ticket_id`, `until`(datetime), `reason` — active snoozes; cleared by the `unsnooze` cron |
 
 **Files / RAG:**
 - `/knowledge` — product docs (`.txt`), auto-indexed. The draft, coach, and concierge agents search it; the **kb-writer** publishes new docs into it (self-improving).
@@ -47,7 +48,7 @@ writes. Each has an `instruction.txt` and a JSON-Schema `output_schema`.
 
 ---
 
-## 3. Functions (11)
+## 3. Functions (17)
 
 Deterministic Python (`code.py`, Pydantic in/out). Functions own every table write and side effect.
 
@@ -64,10 +65,16 @@ Deterministic Python (`code.py`, Pydantic in/out). Functions own every table wri
 | **sla_sweep** | Escalate every open ticket past its SLA (run on a cron) |
 | **record_csat** | Store a 1-5 customer rating into `csat` + a note event |
 | **assign_ticket** | Assign / unassign a ticket to a pod member + a note event |
+| **set_tags** | Replace a ticket's tags (inline tag editor) |
+| **snooze_ticket** | Snooze a ticket until a chosen time (writes a `snoozes` row) + a note event |
+| **unsnooze_sweep** | Delete elapsed snooze rows so tickets resurface (run on a cron) |
+| **followup_sweep** | Find answered-but-silent tickets, draft a check-in, move them back to Review (cron) |
+| **churn_sweep** | Detect at-risk customers and open a proactive retention ticket with a drafted outreach (cron) |
+| **merge_tickets** | Merge a duplicate into a primary: move its messages, close it, link both sides |
 
 ---
 
-## 4. Workflows (6) & Schedules (3)
+## 4. Workflows (9) & Schedules (6)
 
 ### Workflows
 | Workflow | Shape | Trigger |
@@ -78,6 +85,9 @@ Deterministic Python (`code.py`, Pydantic in/out). Functions own every table wri
 | **daily_digest** | digest → save_digest → END | `daily-briefing` cron + app "Generate now" |
 | **sla_sweep** | sla_sweep → END | `sla-sweep` cron |
 | **parse_intake** | `FORM(file_path)` → intake-parser → intake_ticket → END | app document upload |
+| **unsnooze_sweep** | unsnooze_sweep → END | `unsnooze` cron |
+| **followup_sweep** | followup_sweep → END | `followup` cron |
+| **churn_sweep** | churn_sweep → END | `churn` cron |
 
 ### Schedules — the autonomy
 | Schedule | Type | Fires |
@@ -85,6 +95,9 @@ Deterministic Python (`code.py`, Pydantic in/out). Functions own every table wri
 | **auto-intake** | DATASTORE (`tickets` INSERT) | runs `auto_intake` the instant any ticket is created (reads `start.metadata.record_id`) |
 | **daily-briefing** | TIME cron `0 9 * * *` | writes the executive briefing every morning |
 | **sla-sweep** | TIME cron `*/30 * * * *` | enforces SLAs every 30 minutes |
+| **unsnooze** | TIME cron `*/15 * * * *` | clears elapsed snoozes so tickets resurface |
+| **followup** | TIME cron `0 10 * * *` | drafts follow-ups for answered-but-silent tickets |
+| **churn** | TIME cron `0 8 * * *` | opens proactive retention tickets for at-risk customers |
 
 This is what makes the desk **autonomous**: a ticket from *any* source (app, the Telegram agent, the
 document parser, or a raw insert) triggers the full triage → draft → QA pipeline with no human in the

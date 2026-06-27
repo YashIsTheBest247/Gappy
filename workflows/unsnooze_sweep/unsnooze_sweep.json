@@ -1,0 +1,11 @@
+{
+  "name": "unsnooze_sweep",
+  "description": "Resurfaces tickets whose snooze has expired. Runs on a recurring cron schedule.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    { "id": "sweep", "type": "FUNCTION", "label": "Resurface expired snoozes", "config": { "function_name": "unsnooze_sweep" } },
+    { "id": "done", "type": "END", "label": "Done" }
+  ],
+  "edges": [ { "id": "e1", "source": "sweep", "target": "done" } ],
+  "visibility": "POD"
+}

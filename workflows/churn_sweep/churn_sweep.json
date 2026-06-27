@@ -1,0 +1,11 @@
+{
+  "name": "churn_sweep",
+  "description": "Proactively opens retention tickets for at-risk customers. Runs on a recurring cron schedule.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    { "id": "scan", "type": "FUNCTION", "label": "Scan for churn risk", "config": { "function_name": "churn_sweep" } },
+    { "id": "done", "type": "END", "label": "Done" }
+  ],
+  "edges": [ { "id": "e1", "source": "scan", "target": "done" } ],
+  "visibility": "POD"
+}

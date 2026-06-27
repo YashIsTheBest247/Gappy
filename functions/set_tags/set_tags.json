@@ -1,0 +1,11 @@
+{
+  "name": "set_tags",
+  "description": "Replaces the tags on a ticket.",
+  "type": "API",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
+    ]
+  }
+}
