@@ -1,5 +1,5 @@
 import React from "react";
-import { useTickets, useAllQuality, Ticket } from "../lib/podData";
+import { useTickets, useAllQuality, useAllCsat, Ticket } from "../lib/podData";
 import { Card, Stat, Loading, Empty, Badge } from "../lib/ui";
 import { CATEGORY_LABEL, STATUS_LABEL } from "../lib/format";
 import { go } from "../lib/router";
@@ -45,8 +45,12 @@ const PRIO_COLOR: Record<string, string> = { urgent: "#dc2626", high: "#ff5a00",
 export default function InsightsPage() {
   const { tickets, isLoading } = useTickets();
   const { quality } = useAllQuality();
+  const { csat } = useAllCsat();
 
   if (isLoading) return <Loading label="Crunching insights" />;
+
+  const rated = csat.filter((c) => typeof c.rating === "number");
+  const avgCsat = rated.length ? rated.reduce((s, c) => s + (c.rating ?? 0), 0) / rated.length : null;
 
   const scored = quality.filter((q) => typeof q.score === "number");
   const avgQa = scored.length ? Math.round(scored.reduce((s, q) => s + (q.score ?? 0), 0) / scored.length) : null;
@@ -98,6 +102,7 @@ export default function InsightsPage() {
         <Stat num={conf.length ? `${avgConf}%` : "—"} label="Avg AI confidence" tone="amber" />
         <Stat num={avgQa != null ? avgQa : "—"} label="Avg QA score" tone="mint" />
         <Stat num={shipRate != null ? `${shipRate}%` : "—"} label="Drafts ready to ship" tone="sky" />
+        <Stat num={avgCsat != null ? `${avgCsat.toFixed(1)}/5` : "—"} label="Avg CSAT" tone="amber" />
       </div>
 
       <Card style={{ marginBottom: 20 }}>

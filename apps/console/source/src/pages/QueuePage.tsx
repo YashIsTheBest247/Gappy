@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useTickets, Ticket } from "../lib/podData";
-import { Card, Stat, StatusPill, PriorityTag, Badge, Loading, Empty } from "../lib/ui";
+import { useTickets, useFunctionRunner, useIntakeWorkflow, Ticket } from "../lib/podData";
+import { Card, Stat, StatusPill, PriorityTag, Badge, Btn, Loading, Empty } from "../lib/ui";
 import { go } from "../lib/router";
+import { toast } from "../lib/toast";
 import { CHANNEL_LABEL, timeAgo, slaState } from "../lib/format";
 
 const FILTERS: { key: string; label: string; match: (t: Ticket) => boolean }[] = [
@@ -13,10 +14,14 @@ const FILTERS: { key: string; label: string; match: (t: Ticket) => boolean }[] =
   { key: "all", label: "All", match: () => true },
 ];
 
-function TicketRow({ t }: { t: Ticket }) {
+function TicketRow({ t, selectMode, checked, onToggle }: { t: Ticket; selectMode?: boolean; checked?: boolean; onToggle?: () => void }) {
   const sla = slaState(t.sla_due_at);
   return (
-    <div className="row" role="button" onClick={() => go(`#/ticket/${t.id}`)}>
+    <div className="row" role="button" onClick={() => (selectMode ? onToggle?.() : go(`#/ticket/${t.id}`))}>
+      {selectMode && (
+        <input type="checkbox" className="rowcheck" checked={!!checked} readOnly
+          onClick={(e) => { e.stopPropagation(); onToggle?.(); }} />
+      )}
       <div className="row-num">#{t.number ?? "—"}</div>
       <div className="row-main">
         <div className="row-subject">{t.subject}</div>
@@ -44,6 +49,23 @@ export default function QueuePage() {
   const [filter, setFilter] = useState("open");
   const [priority, setPriority] = useState("all");
   const [query, setQuery] = useState("");
+  const [selectMode, setSelectMode] = useState(false);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const escalate = useFunctionRunner("escalate_ticket");
+  const wf = useIntakeWorkflow();
+
+  const toggle = (id: string) => setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const clearSel = () => setSel(new Set());
+  async function bulkEscalate() {
+    const ids = [...sel];
+    for (const id of ids) { try { await escalate.run({ ticket_id: id, reason: "Bulk-escalated from the queue." }); } catch { /* keep going */ } }
+    toast(`Escalated ${ids.length} ${ids.length === 1 ? "ticket" : "tickets"}`, "info"); clearSel();
+  }
+  async function bulkRunAI() {
+    const ids = [...sel];
+    for (const id of ids) { try { await wf.start(id); } catch { /* keep going */ } }
+    toast(`Re-ran the AI on ${ids.length} ${ids.length === 1 ? "ticket" : "tickets"}`, "ok"); clearSel();
+  }
 
   const open = tickets.filter((t) => !["answered", "closed"].includes(t.status)).length;
   const awaiting = tickets.filter((t) => t.status === "awaiting_approval").length;
@@ -69,7 +91,11 @@ export default function QueuePage() {
           <h1 className="page-title">Queue</h1>
           <p className="page-sub">Every request auto-triaged, drafted &amp; QA-graded the moment it lands.</p>
         </div>
-        <span className="auto-pill">Autonomous mode</span>
+        <div className="wrap">
+          <button className={`btn btn-sm ${selectMode ? "btn-primary" : "btn-soft"}`}
+            onClick={() => { setSelectMode((m) => !m); clearSel(); }}>{selectMode ? "Done" : "Select"}</button>
+          <span className="auto-pill">Autonomous mode</span>
+        </div>
       </div>
 
       <div className="stats" style={{ marginBottom: 28 }}>
@@ -116,13 +142,24 @@ export default function QueuePage() {
         {shown.length} {shown.length === 1 ? "ticket" : "tickets"}
       </div>
 
+      {selectMode && sel.size > 0 && (
+        <div className="bulkbar">
+          <strong>{sel.size} selected</strong>
+          <Btn size="sm" variant="ghost" onClick={bulkRunAI} disabled={wf.starting}>Run AI</Btn>
+          <Btn size="sm" onClick={bulkEscalate} disabled={escalate.busy}>Escalate</Btn>
+          <button className="btn btn-soft btn-sm" onClick={clearSel}>Clear</button>
+        </div>
+      )}
+
       {isLoading ? (
         <Loading label="Loading queue" />
       ) : shown.length === 0 ? (
         <Card><Empty>{q || priority !== "all" ? "No tickets match your filters." : "No tickets here yet. Create one from “+ New ticket”."}</Empty></Card>
       ) : (
         <div className="grid stagger-list" style={{ gap: 10 }}>
-          {shown.map((t) => <TicketRow key={t.id} t={t} />)}
+          {shown.map((t) => (
+            <TicketRow key={t.id} t={t} selectMode={selectMode} checked={sel.has(t.id)} onToggle={() => toggle(t.id)} />
+          ))}
         </div>
       )}
     </div>

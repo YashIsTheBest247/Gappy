@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, useWriteKbWorkflow, useTickets, useQuality, Draft, Ticket,
+  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, useWriteKbWorkflow, useTickets, useQuality, useCsat, Draft, Ticket,
 } from "../lib/podData";
 import { Card, Btn, Badge, StatusPill, PriorityTag, CategoryTag, Avatar, Loading, Empty } from "../lib/ui";
 import { go } from "../lib/router";
@@ -217,6 +217,41 @@ function QAReview({ ticketId }: { ticketId: string }) {
   );
 }
 
+function CsatWidget({ ticket }: { ticket: Ticket }) {
+  const { csat } = useCsat(ticket.id);
+  const rec = useFunctionRunner("record_csat");
+  const [done, setDone] = useState(false);
+  if (!["answered", "closed"].includes(ticket.status)) return null;
+
+  if (csat) {
+    return (
+      <Card className="compact">
+        <div className="between"><h3 style={{ fontSize: 18 }}>Customer satisfaction</h3>
+          <span className="qa-verdict v-ship">{csat.rating}/5</span></div>
+        {csat.comment && <p className="muted-text" style={{ marginTop: 8 }}>{csat.comment}</p>}
+      </Card>
+    );
+  }
+  if (done) return <Card className="compact"><Badge>Thanks — feedback recorded ✓</Badge></Card>;
+
+  async function rate(r: number) {
+    await rec.run({ ticket_id: ticket.id, rating: r });
+    setDone(true);
+    toast(`Customer satisfaction logged: ${r}/5`, "ok");
+  }
+  return (
+    <Card className="compact">
+      <h3 style={{ fontSize: 18, marginBottom: 4 }}>How did we do?</h3>
+      <p className="muted-text" style={{ fontSize: 13, marginBottom: 12 }}>Capture the customer's rating once they reply.</p>
+      <div className="wrap">
+        {[1, 2, 3, 4, 5].map((r) => (
+          <button key={r} className="btn btn-soft" onClick={() => rate(r)} disabled={rec.busy}>{r} ★</button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export default function TicketPage({ id }: { id: string }) {
   const { ticket, isLoading } = useTicket(id);
   const { drafts } = useDrafts(id);
@@ -276,6 +311,7 @@ export default function TicketPage({ id }: { id: string }) {
           </Card>
           <DraftPanel ticketId={ticket.id} draft={latest} />
           <QAReview ticketId={ticket.id} />
+          <CsatWidget ticket={ticket} />
         </div>
         <div className="grid" style={{ gap: 20 }}>
           <Similar ticket={ticket} />

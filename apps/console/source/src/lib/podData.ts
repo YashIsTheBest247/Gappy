@@ -8,6 +8,7 @@ import {
   useFiles,
   useFileSearch,
   useWorkflowStart,
+  useUploadFile,
 } from "lemma-sdk/react";
 import { client, podId } from "./lemmaClient";
 
@@ -35,6 +36,10 @@ export type Quality = {
   id: string; ticket_id: string; draft_id: string; score?: number;
   verdict?: string; tone?: string; grounding?: string; issues?: string[]; suggestion?: string; created_at?: string;
 };
+export type Report = {
+  id: string; headline?: string; body?: string; highlights?: string[]; period?: string; created_at?: string;
+};
+export type Csat = { id: string; ticket_id: string; rating?: number; comment?: string; created_at?: string };
 
 type Filter = { field: string; op: string; value?: unknown };
 const byTicket = (ticketId: string): Filter[] => [{ field: "ticket_id", op: "eq", value: ticketId }];
@@ -99,6 +104,30 @@ export function useFunctionRunner(functionName: string) {
   };
 }
 
+/** Executive briefings (newest first). */
+export function useReports() {
+  const { records, isLoading } = useRecords<Report>({
+    client, podId, tableName: "reports", limit: 10,
+    sort: [{ field: "created_at", direction: "desc" }],
+  });
+  return { reports: records ?? [], latest: records?.[0] ?? null, isLoading };
+}
+
+/** Live stream of ticket events across the whole desk. */
+export function useLiveEvents(limit = 40) {
+  const { records, isLoading, liveStatus } = useLiveRecords<TicketEvent>({
+    client, podId, tableName: "ticket_events", limit,
+    sort: [{ field: "created_at", direction: "desc" }],
+  });
+  return { events: records ?? [], isLoading, liveStatus };
+}
+
+/** Runs the daily_digest workflow to generate a fresh briefing on demand. */
+export function useDigestWorkflow() {
+  const wf = useWorkflowStart({ client, podId, workflowName: "daily_digest", autoLoad: false, autoPoll: false });
+  return { start: () => wf.start({}), starting: Boolean(wf.isStarting) };
+}
+
 /** Latest QA verdict for a ticket (from the reply-coach agent). */
 export function useQuality(ticketId?: string) {
   const { records, isLoading } = useRecords<Quality>({
@@ -114,6 +143,39 @@ export function useQuality(ticketId?: string) {
 export function useAllQuality() {
   const { records, isLoading } = useRecords<Quality>({ client, podId, tableName: "quality", limit: 500 });
   return { quality: records ?? [], isLoading };
+}
+
+/** CSAT for one ticket (latest). */
+export function useCsat(ticketId?: string) {
+  const { records } = useRecords<Csat>({
+    client, podId, tableName: "csat", limit: 5,
+    filters: ticketId ? byTicket(ticketId) : [],
+    sort: [{ field: "created_at", direction: "desc" }],
+    enabled: Boolean(ticketId),
+  });
+  return { csat: records?.[0] ?? null };
+}
+/** All CSAT rows for desk-wide metrics. */
+export function useAllCsat() {
+  const { records } = useRecords<Csat>({ client, podId, tableName: "csat", limit: 500 });
+  return { csat: records ?? [] };
+}
+
+/** Upload an inbound document to /inbox, returns its path. */
+export function useUploadDoc() {
+  const up = useUploadFile({ client, podId });
+  return {
+    upload: async (file: Blob, name: string): Promise<string> => {
+      const res: any = await up.upload(file, { directoryPath: "/inbox", name, searchEnabled: true, description: "Inbound document" });
+      return (res?.path ?? res?.full_path ?? `/inbox/${name}`) as string;
+    },
+    busy: Boolean(up.isSubmitting),
+  };
+}
+/** Parse an uploaded document into a ticket (multimodal intake). */
+export function useParseWorkflow() {
+  const wf = useWorkflowStart({ client, podId, workflowName: "parse_intake", autoLoad: false, autoPoll: false });
+  return { start: (filePath: string) => wf.start({ file_path: filePath }), starting: Boolean(wf.isStarting) };
 }
 
 /** Starts the `intake` workflow (triage -> draft) for a ticket, submitting ticket_id to its entry form. */

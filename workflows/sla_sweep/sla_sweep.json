@@ -1,0 +1,11 @@
+{
+  "name": "sla_sweep",
+  "description": "Autonomous SLA enforcement: escalates any open ticket past its SLA. Runs on a recurring cron schedule.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    { "id": "sweep", "type": "FUNCTION", "label": "Escalate SLA breaches", "config": { "function_name": "sla_sweep" } },
+    { "id": "done", "type": "END", "label": "Done" }
+  ],
+  "edges": [ { "id": "e1", "source": "sweep", "target": "done" } ],
+  "visibility": "POD"
+}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useFunctionRunner } from "../lib/podData";
+import { useFunctionRunner, useUploadDoc, useParseWorkflow } from "../lib/podData";
 import { Card, Btn, Field } from "../lib/ui";
 import { go } from "../lib/router";
 import { toast } from "../lib/toast";
@@ -20,6 +20,22 @@ export default function NewTicketPage() {
   });
   const set = (k: string) => (e: any) => setForm({ ...form, [k]: e.target.value });
   const busy = intake.busy;
+  const doc = useUploadDoc();
+  const parse = useParseWorkflow();
+  const docBusy = doc.busy || parse.starting;
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const path = await doc.upload(file, file.name);
+      await parse.start(path);
+      toast(`“${file.name}” uploaded — AI is reading it and creating the ticket…`, "ok");
+      go("#/queue");
+    } catch {
+      toast("Couldn't process that document.", "err");
+    }
+  }
 
   async function submit() {
     if (!form.subject.trim() || !form.body.trim()) {
@@ -84,6 +100,16 @@ export default function NewTicketPage() {
               </button>
             ))}
           </div>
+
+          <h3 style={{ fontSize: 16, margin: "22px 0 6px" }}>Or drop a document</h3>
+          <p className="muted-text" style={{ fontSize: 13, marginBottom: 12 }}>
+            PDF, email, or a screenshot of a customer message — the AI reads it, extracts the ticket, and triages it.
+          </p>
+          <label className="doczone">
+            <input type="file" accept=".pdf,.txt,.eml,.md,.png,.jpg,.jpeg,.webp"
+              style={{ display: "none" }} onChange={onFile} disabled={docBusy} />
+            <span>{docBusy ? "Reading the document…" : "📄  Choose or drop a file"}</span>
+          </label>
         </Card>
       </div>
     </div>

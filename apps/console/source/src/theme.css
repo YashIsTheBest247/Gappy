@@ -358,6 +358,17 @@ input, textarea, select { font-family: inherit; }
   }
 }
 
+/* ---------- Document upload + bulk bar ---------- */
+.doczone {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 22px; border: 1.5px dashed var(--line-strong); border-radius: 18px;
+  color: var(--muted); font-weight: 500; cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+.doczone:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.bulkbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-radius: 16px; background: var(--accent-soft); color: var(--ink); margin-bottom: 14px; }
+.rowcheck { width: 18px; height: 18px; accent-color: var(--accent); flex: 0 0 auto; cursor: pointer; }
+
 /* ---------- Command palette (⌘K) ---------- */
 .cmdk-overlay {
   position: fixed; inset: 0; z-index: 200; padding-top: 13vh;

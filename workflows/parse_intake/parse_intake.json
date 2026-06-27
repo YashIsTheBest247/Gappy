@@ -1,0 +1,50 @@
+{
+  "name": "parse_intake",
+  "description": "Multimodal intake: reads an uploaded document, extracts a ticket from it, and creates it (which then auto-triages via the intake schedule).",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "FORM",
+      "label": "Document",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": { "file_path": { "type": "string" } },
+          "required": ["file_path"]
+        }
+      }
+    },
+    {
+      "id": "parse",
+      "type": "AGENT",
+      "label": "Parse the document",
+      "config": {
+        "agent_name": "intake-parser",
+        "input_mapping": { "file_path": { "type": "expression", "value": "input.file_path" } }
+      }
+    },
+    {
+      "id": "create",
+      "type": "FUNCTION",
+      "label": "Create the ticket",
+      "config": {
+        "function_name": "intake_ticket",
+        "input_mapping": {
+          "subject": { "type": "expression", "value": "parse.subject" },
+          "body": { "type": "expression", "value": "parse.body" },
+          "channel": { "type": "expression", "value": "parse.channel" },
+          "customer_name": { "type": "expression", "value": "parse.customer_name" },
+          "customer_email": { "type": "expression", "value": "parse.customer_email" }
+        }
+      }
+    },
+    { "id": "done", "type": "END", "label": "Ticket created" }
+  ],
+  "edges": [
+    { "id": "e0", "source": "input", "target": "parse" },
+    { "id": "e1", "source": "parse", "target": "create" },
+    { "id": "e2", "source": "create", "target": "done" }
+  ],
+  "visibility": "POD"
+}

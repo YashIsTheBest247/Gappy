@@ -1,0 +1,32 @@
+{
+  "name": "daily_digest",
+  "description": "Generates an executive briefing of the support desk and saves it. Runs on a daily cron schedule and on demand from the console.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    {
+      "id": "write",
+      "type": "AGENT",
+      "label": "Write the briefing",
+      "config": { "agent_name": "digest" }
+    },
+    {
+      "id": "persist",
+      "type": "FUNCTION",
+      "label": "Save the briefing",
+      "config": {
+        "function_name": "save_digest",
+        "input_mapping": {
+          "headline": { "type": "expression", "value": "write.headline" },
+          "body": { "type": "expression", "value": "write.body" },
+          "highlights": { "type": "expression", "value": "write.highlights" }
+        }
+      }
+    },
+    { "id": "done", "type": "END", "label": "Briefing ready" }
+  ],
+  "edges": [
+    { "id": "e1", "source": "write", "target": "persist" },
+    { "id": "e2", "source": "persist", "target": "done" }
+  ],
+  "visibility": "POD"
+}

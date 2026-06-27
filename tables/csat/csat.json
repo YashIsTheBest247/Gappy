@@ -1,0 +1,10 @@
+{
+  "name": "csat",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Ticket this rating is for." },
+    { "name": "rating", "type": "INTEGER", "required": true, "description": "Customer satisfaction 1-5." },
+    { "name": "comment", "type": "TEXT", "description": "Optional customer comment." }
+  ]
+}

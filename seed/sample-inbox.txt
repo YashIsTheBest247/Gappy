@@ -1,0 +1,13 @@
+From: Ravi Shah <ravi@meridian.io>
+To: support@example.com
+Subject: VAT number on invoices + last month's invoice
+
+Hi team,
+
+We're on the Growth annual plan. Our finance team needs the VAT/GST number added to
+our invoices before the next billing date, and a copy of last month's invoice for our
+records. Could you help with both before Friday?
+
+Thanks,
+Ravi Shah
+Meridian Labs

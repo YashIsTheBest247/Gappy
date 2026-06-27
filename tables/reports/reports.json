@@ -1,0 +1,11 @@
+{
+  "name": "reports",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "headline", "type": "TEXT", "description": "One-line summary of the desk's state." },
+    { "name": "body", "type": "TEXT", "description": "The full briefing narrative." },
+    { "name": "highlights", "type": "JSON", "description": "Array of key bullet points / recommended actions." },
+    { "name": "period", "type": "TEXT", "default": "day", "description": "Reporting period this briefing covers." }
+  ]
+}

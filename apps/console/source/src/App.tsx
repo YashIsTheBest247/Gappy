@@ -9,6 +9,7 @@ import AssistantPage from "./pages/AssistantPage";
 import NewTicketPage from "./pages/NewTicketPage";
 import InsightsPage from "./pages/InsightsPage";
 import CustomersPage from "./pages/CustomersPage";
+import BriefingPage from "./pages/BriefingPage";
 import { Toaster } from "./lib/toast";
 import { Logo } from "./lib/Logo";
 import { CommandPalette } from "./lib/CommandPalette";
@@ -18,6 +19,7 @@ const NAV = [
   { key: "review", label: "Review", href: "#/review" },
   { key: "insights", label: "Insights", href: "#/insights" },
   { key: "customers", label: "Customers", href: "#/customers" },
+  { key: "briefing", label: "Briefing", href: "#/briefing" },
   { key: "knowledge", label: "Knowledge", href: "#/knowledge" },
   { key: "assistant", label: "Assistant", href: "#/assistant" },
 ];
@@ -101,6 +103,7 @@ export default function App() {
             {route.name === "review" && <ReviewPage />}
             {route.name === "insights" && <InsightsPage />}
             {route.name === "customers" && <CustomersPage />}
+            {route.name === "briefing" && <BriefingPage />}
             {route.name === "ticket" && <TicketPage id={route.id} />}
             {route.name === "knowledge" && <KnowledgePage />}
             {route.name === "assistant" && <AssistantPage />}

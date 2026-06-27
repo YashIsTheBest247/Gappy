@@ -1,0 +1,22 @@
+{
+  "name": "digest",
+  "description": "Writes an executive briefing of the support desk: volume, what's open, escalations, at-risk customers, AI quality, and recommended actions. Read-only.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "headline": { "type": "string", "description": "One punchy sentence summarizing the desk right now." },
+      "body": { "type": "string", "description": "A short executive briefing, 4-8 sentences." },
+      "highlights": { "type": "array", "items": { "type": "string" }, "description": "3-6 key bullets / recommended actions." }
+    },
+    "required": ["headline", "body", "highlights"]
+  },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "quality", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "ticket_events", "permission_ids": ["datastore.table.read", "datastore.record.read"] }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "intake-parser",
+  "description": "Reads an uploaded document (PDF, screenshot, or pasted email) and extracts a clean support ticket from it. Read-only; intake_ticket creates the ticket.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "input_schema": {
+    "type": "object",
+    "properties": { "file_path": { "type": "string" } },
+    "required": ["file_path"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "subject": { "type": "string" },
+      "body": { "type": "string" },
+      "customer_name": { "type": "string" },
+      "customer_email": { "type": "string" },
+      "channel": { "type": "string", "enum": ["email", "form", "slack"] }
+    },
+    "required": ["subject", "body", "customer_name", "customer_email", "channel"]
+  },
+  "permissions": {
+    "grants": [
+      { "resource_type": "folder", "resource_name": "/inbox", "permission_ids": ["folder.read"] }
+    ]
+  }
+}
