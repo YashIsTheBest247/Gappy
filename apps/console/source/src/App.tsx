@@ -57,12 +57,14 @@ function Sidebar({ active, theme, toggleTheme, openCmd }: { active: string; them
         </div>
       </div>
 
-      {NAV.map((n) => (
-        <a key={n.key} href={n.href} className={`nav-link ${active === n.key ? "active" : ""}`}>
-          <span>{n.label}</span>
-          {counts[n.key] ? <span className="nav-count">{counts[n.key]}</span> : null}
-        </a>
-      ))}
+      <nav className="nav-scroll">
+        {NAV.map((n) => (
+          <a key={n.key} href={n.href} className={`nav-link ${active === n.key ? "active" : ""}`}>
+            <span>{n.label}</span>
+            {counts[n.key] ? <span className="nav-count">{counts[n.key]}</span> : null}
+          </a>
+        ))}
+      </nav>
 
       <div className="side-actions">
         <button className="theme-toggle" onClick={openCmd} aria-label="Search">

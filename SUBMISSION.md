@@ -48,9 +48,9 @@ Two things make it stand out:
 
 ## Lemma SDK usage
 
-Tend uses essentially the entire platform: **5 tables**, **Files + RAG**, **6 agents**, **7 functions**,
-**3 workflows**, a **datastore schedule** (the autonomy), a **Telegram surface**, and a **deployed app**.
-Architecture detail in [ARCHITECTURE.md](ARCHITECTURE.md); setup in [README.md](README.md).
+Tend uses essentially the entire platform: **8 tables**, **Files + RAG** (self-improving), **8 agents**,
+**11 functions**, **6 workflows**, **3 schedules** (a datastore trigger + two crons), a **live Telegram surface**,
+and a **deployed 9-page app**. Architecture detail in [ARCHITECTURE.md](ARCHITECTURE.md); setup in [README.md](README.md).
 
 
 

@@ -126,6 +126,12 @@ input, textarea, select { font-family: inherit; }
 .brand-name { font-weight: 700; font-size: 17px; color: var(--ink); letter-spacing: -0.02em; }
 .brand-sub { font-size: 11px; color: var(--muted); }
 
+.nav-scroll {
+  display: flex; flex-direction: column; gap: 4px;
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  margin: 0 -4px; padding: 0 4px;
+}
+.nav-scroll::-webkit-scrollbar { width: 6px; }
 .nav-link {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 11px 15px; border-radius: 16px; color: var(--ink-soft);
@@ -276,6 +282,7 @@ input, textarea, select { font-family: inherit; }
   }
   .brand { padding: 0 8px 0 2px; flex: 0 0 auto; }
   .brand .stack { display: none; }
+  .nav-scroll { display: contents; }
   .nav-link { padding: 9px 13px; white-space: nowrap; flex: 0 0 auto; }
   .side-actions { margin-top: 0; margin-left: auto; flex-direction: row; align-items: center; padding-top: 0; gap: 8px; flex: 0 0 auto; }
   .theme-toggle { width: auto; padding: 9px 12px; }
