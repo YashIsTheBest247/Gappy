@@ -1,0 +1,15 @@
+{
+  "name": "drafts",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Ticket this draft answers." },
+    { "name": "version", "type": "INTEGER", "required": true, "default": 1, "description": "Increments each time the draft agent re-drafts." },
+    { "name": "body", "type": "TEXT", "required": true, "description": "Proposed reply text, grounded in the knowledge base." },
+    { "name": "citations", "type": "JSON", "description": "Array of {path, quote} the draft was grounded in." },
+    { "name": "confidence", "type": "FLOAT", "description": "Draft agent self-rated confidence 0-1." },
+    { "name": "status", "type": "ENUM", "required": true, "default": "proposed", "options": ["proposed", "approved", "rejected", "sent"], "description": "Review state of this draft." },
+    { "name": "reviewer_user_id", "type": "USER", "description": "Pod member who approved/rejected." },
+    { "name": "review_notes", "type": "TEXT", "description": "Reviewer feedback, used to re-draft on rejection." }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "support-desk",
+  "display_name": "AI Support Desk",
+  "description": "An AI customer-support desk for a small startup: inbound messages from email, in-app form, and Slack are triaged, answered with doc-grounded drafts, approved by a human, and tracked end-to-end with SLA and escalation.",
+  "version": "0.1.0"
+}

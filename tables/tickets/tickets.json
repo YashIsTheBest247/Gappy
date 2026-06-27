@@ -1,0 +1,25 @@
+{
+  "name": "tickets",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "number", "type": "SERIAL", "auto": true, "unique": true, "description": "Human-friendly ticket number." },
+    { "name": "subject", "type": "TEXT", "required": true, "max_length": 240, "description": "Short summary line of the issue." },
+    { "name": "body_preview", "type": "TEXT", "description": "First inbound message, truncated for list views." },
+    { "name": "channel", "type": "ENUM", "required": true, "default": "email", "options": ["email", "form", "slack"], "description": "Where the ticket came in from." },
+    { "name": "customer_name", "type": "TEXT", "description": "Display name of the requester." },
+    { "name": "customer_email", "type": "TEXT", "description": "Reply-to address for the requester." },
+    { "name": "status", "type": "ENUM", "required": true, "default": "new", "options": ["new", "triaged", "awaiting_approval", "answered", "escalated", "closed"], "description": "Lifecycle state of the ticket." },
+    { "name": "priority", "type": "ENUM", "default": "normal", "options": ["low", "normal", "high", "urgent"], "description": "Set by the triage agent." },
+    { "name": "category", "type": "ENUM", "default": "other", "options": ["billing", "bug", "howto", "feature_request", "account", "outage", "other"], "description": "Set by the triage agent." },
+    { "name": "sentiment", "type": "ENUM", "default": "neutral", "options": ["positive", "neutral", "negative"], "description": "Set by the triage agent." },
+    { "name": "summary", "type": "TEXT", "description": "One-line agent summary of what the customer needs." },
+    { "name": "tags", "type": "JSON", "description": "Free-form labels from triage (array of strings)." },
+    { "name": "assignee_user_id", "type": "USER", "description": "Pod member who owns this ticket." },
+    { "name": "related_ticket_id", "type": "UUID", "description": "Likely-duplicate or related ticket, set by triage dedupe." },
+    { "name": "confidence", "type": "FLOAT", "description": "Draft agent self-rated answer confidence 0-1." },
+    { "name": "sla_due_at", "type": "DATETIME", "description": "When a first response is due, based on priority." },
+    { "name": "first_response_at", "type": "DATETIME", "description": "Timestamp of the first outbound reply." },
+    { "name": "resolved_at", "type": "DATETIME", "description": "When the ticket was closed/answered." }
+  ]
+}

@@ -1,0 +1,17 @@
+# dependencies & build output
+**/node_modules/
+**/dist/
+**/archive.zip
+
+# local env (committed template is .env.local.example)
+**/.env.local
+
+# logs / misc
+*.log
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

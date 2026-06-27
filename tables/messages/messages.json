@@ -1,0 +1,12 @@
+{
+  "name": "messages",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Ticket this message belongs to." },
+    { "name": "direction", "type": "ENUM", "required": true, "default": "inbound", "options": ["inbound", "outbound", "internal"], "description": "inbound = from customer, outbound = sent reply, internal = team note." },
+    { "name": "channel", "type": "ENUM", "default": "email", "options": ["email", "form", "slack", "system"], "description": "Channel this message moved over." },
+    { "name": "author", "type": "TEXT", "description": "Display name of the sender (customer or agent)." },
+    { "name": "body", "type": "TEXT", "required": true, "description": "Message contents." }
+  ]
+}

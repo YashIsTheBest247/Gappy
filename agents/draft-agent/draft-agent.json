@@ -1,0 +1,41 @@
+{
+  "name": "draft-agent",
+  "description": "Drafts a customer-ready reply grounded in the /knowledge document store (RAG). Read-only; the save_draft function persists the result.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "ticket_id": { "type": "string" },
+      "review_notes": { "type": ["string", "null"], "description": "Reviewer feedback if this is a re-draft after rejection." }
+    },
+    "required": ["ticket_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "body": { "type": "string", "description": "The full reply to the customer, ready to send." },
+      "citations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "quote": { "type": "string" }
+          },
+          "required": ["path"]
+        }
+      },
+      "confidence": { "type": "number", "description": "0-1 self-rated confidence the reply is correct and complete." },
+      "needs_human": { "type": "boolean", "description": "true if the KB does not contain enough to answer safely." }
+    },
+    "required": ["body", "citations", "confidence", "needs_human"]
+  },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "messages", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "folder", "resource_name": "/knowledge", "permission_ids": ["folder.read"] }
+    ]
+  }
+}

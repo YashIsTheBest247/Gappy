@@ -1,0 +1,25 @@
+Accounts, Login & SSO
+=====================
+
+Password reset
+- Use "Forgot password" on the login page. The reset link is valid for 60 minutes.
+- If the email never arrives, check spam, then confirm the address is the one invited to the workspace.
+
+Single Sign-On (SSO)
+- SSO (SAML and Google Workspace) is available on the Scale plan.
+- Once SSO is enforced, password login is disabled for all members except the workspace owner,
+  who keeps a break-glass password login.
+- To set up SSO: Settings > Security > SSO, upload your IdP metadata, then test with one account
+  before enforcing for everyone.
+
+Two-factor authentication (2FA)
+- 2FA via authenticator app is available on all plans and can be required workspace-wide on Growth and above.
+- Lost 2FA device: the workspace owner can reset 2FA for a member under Settings > Members.
+
+Roles and access
+- Roles are Owner, Admin, Member, and Viewer. Only Owner and Admin can change billing or security settings.
+- Removing a member immediately revokes their sessions.
+
+Account deletion
+- A workspace owner can delete the workspace under Settings > Danger Zone. Deletion is permanent
+  after a 7-day grace period, during which it can be restored by contacting support.

@@ -1,0 +1,27 @@
+Billing & Refunds Policy
+=======================
+
+Plans and billing cycle
+- Plans are Starter, Growth, and Scale. Billing is monthly or annual.
+- Annual plans are billed up front and are discounted 20% versus monthly.
+- Seats can be added at any time; new seats are prorated for the remainder of the cycle.
+
+Refunds
+- We offer a full refund within 14 days of the first payment on a new subscription.
+- After 14 days, monthly plans are non-refundable but can be cancelled to stop future charges.
+- Annual plans cancelled after 14 days are not refunded for the remaining term, but the plan
+  stays active until the end of the paid term.
+- Accidental duplicate charges are always refunded in full. Refunds reach the card in 5-10
+  business days depending on the bank.
+
+Failed payments
+- If a charge fails we retry on days 1, 3, and 5. The account stays active during retries.
+- After the third failed retry the account moves to read-only until payment succeeds.
+
+Changing or cancelling
+- Plan changes and cancellation are self-serve under Settings > Billing.
+- Downgrades take effect at the next renewal; upgrades take effect immediately and are prorated.
+
+Invoices and tax
+- Invoices are emailed to the billing contact and available under Settings > Billing > Invoices.
+- VAT/GST numbers can be added under Settings > Billing > Company details before an invoice is issued.

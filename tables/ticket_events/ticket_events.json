@@ -1,0 +1,11 @@
+{
+  "name": "ticket_events",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "ticket_id", "type": "UUID", "required": true, "description": "Ticket this event is about." },
+    { "name": "kind", "type": "ENUM", "required": true, "options": ["created", "triaged", "escalated", "drafted", "approved", "rejected", "sent", "closed", "note"], "description": "What happened." },
+    { "name": "actor", "type": "TEXT", "description": "Who/what caused it (agent name, function, or member)." },
+    { "name": "detail", "type": "TEXT", "description": "Human-readable description of the event." }
+  ]
+}

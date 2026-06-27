@@ -1,0 +1,22 @@
+Data Export & API
+=================
+
+CSV export
+- Any table or dashboard can be exported to CSV from the "..." menu > Export.
+- Exports over 50,000 rows are generated in the background; you get an email with a download link
+  when ready. The link is valid for 24 hours.
+- Known issue: very wide exports (200+ columns) may time out in the browser. Use the API or the
+  background export for those.
+
+Full data export
+- A complete workspace export (all projects, as JSON + CSV) is available under
+  Settings > Data > Export workspace. Large workspaces can take up to a few hours.
+
+API access
+- API keys are created under Settings > Developers. Keys inherit the role of the member who created them.
+- The API is rate limited to 600 requests per minute per workspace on Growth and Scale, 120 on Starter.
+- Pagination uses cursor tokens; page size max is 200.
+
+Retention
+- Deleted records are recoverable from Trash for 30 days, then permanently removed.
+- We do not delete exported files on your side; treat downloaded exports as your responsibility.

@@ -1,0 +1,32 @@
+{
+  "name": "triage-agent",
+  "description": "Classifies an inbound support ticket: category, priority, sentiment, a one-line summary, tags, and a likely duplicate. Read-only; persistence is done by the apply_triage function.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "ticket_id": { "type": "string", "description": "id of the ticket row to triage" }
+    },
+    "required": ["ticket_id"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "category": { "type": "string", "enum": ["billing", "bug", "howto", "feature_request", "account", "outage", "other"] },
+      "priority": { "type": "string", "enum": ["low", "normal", "high", "urgent"] },
+      "sentiment": { "type": "string", "enum": ["positive", "neutral", "negative"] },
+      "summary": { "type": "string", "description": "One sentence describing what the customer needs." },
+      "tags": { "type": "array", "items": { "type": "string" } },
+      "related_ticket_id": { "type": ["string", "null"], "description": "id of a likely-duplicate ticket, or null" },
+      "reasoning": { "type": "string", "description": "Short justification for the classification." }
+    },
+    "required": ["category", "priority", "sentiment", "summary", "tags"]
+  },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "messages", "permission_ids": ["datastore.table.read", "datastore.record.read"] }
+    ]
+  }
+}

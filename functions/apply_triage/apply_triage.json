@@ -1,0 +1,12 @@
+{
+  "name": "apply_triage",
+  "description": "Persists the triage agent's classification onto the ticket, recomputes the SLA from priority, and records a triaged event. Returns whether the ticket should escalate.",
+  "type": "API",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
+      { "resource_type": "datastore_table", "resource_name": "ticket_events", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
+    ]
+  }
+}

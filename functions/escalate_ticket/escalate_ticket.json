@@ -1,0 +1,12 @@
+{
+  "name": "escalate_ticket",
+  "description": "Marks a ticket as escalated for human attention and records the reason. Used by the intake workflow's urgent branch and by the console's Escalate action.",
+  "type": "API",
+  "code": { "$file": "code.py" },
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
+      { "resource_type": "datastore_table", "resource_name": "ticket_events", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
+    ]
+  }
+}

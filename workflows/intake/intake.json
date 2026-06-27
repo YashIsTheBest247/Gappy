@@ -1,0 +1,81 @@
+{
+  "name": "intake",
+  "description": "Triage -> persist (auto-escalates urgent) -> doc-grounded draft -> persist. Started with a ticket_id; ends with the ticket awaiting human approval in the console.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "FORM",
+      "label": "Ticket",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": { "ticket_id": { "type": "string" } },
+          "required": ["ticket_id"]
+        }
+      }
+    },
+    {
+      "id": "triage",
+      "type": "AGENT",
+      "label": "Triage the ticket",
+      "config": {
+        "agent_name": "triage-agent",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" }
+        }
+      }
+    },
+    {
+      "id": "persist_triage",
+      "type": "FUNCTION",
+      "label": "Save classification",
+      "config": {
+        "function_name": "apply_triage",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" },
+          "category": { "type": "expression", "value": "triage.category" },
+          "priority": { "type": "expression", "value": "triage.priority" },
+          "sentiment": { "type": "expression", "value": "triage.sentiment" },
+          "summary": { "type": "expression", "value": "triage.summary" },
+          "tags": { "type": "expression", "value": "triage.tags" }
+        }
+      }
+    },
+    {
+      "id": "draft",
+      "type": "AGENT",
+      "label": "Draft a grounded reply",
+      "config": {
+        "agent_name": "draft-agent",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" }
+        }
+      }
+    },
+    {
+      "id": "persist_draft",
+      "type": "FUNCTION",
+      "label": "Save draft, await approval",
+      "config": {
+        "function_name": "save_draft",
+        "input_mapping": {
+          "ticket_id": { "type": "expression", "value": "input.ticket_id" },
+          "body": { "type": "expression", "value": "draft.body" },
+          "citations": { "type": "expression", "value": "draft.citations" },
+          "confidence": { "type": "expression", "value": "draft.confidence" },
+          "needs_human": { "type": "expression", "value": "draft.needs_human" }
+        }
+      }
+    },
+    { "id": "done", "type": "END", "label": "Awaiting approval" }
+  ],
+  "edges": [
+    { "id": "e0", "source": "input", "target": "triage" },
+    { "id": "e1", "source": "triage", "target": "persist_triage" },
+    { "id": "e2", "source": "persist_triage", "target": "draft" },
+    { "id": "e3", "source": "draft", "target": "persist_draft" },
+    { "id": "e4", "source": "persist_draft", "target": "done" }
+  ],
+  "visibility": "POD"
+}

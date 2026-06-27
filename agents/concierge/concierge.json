@@ -1,0 +1,15 @@
+{
+  "name": "concierge",
+  "description": "Read-only assistant embedded in the support console. Answers the team's questions about the queue ('what's urgent and unanswered?') and searches the knowledge base.",
+  "instruction": { "$file": "instruction.txt" },
+  "toolsets": ["POD"],
+  "permissions": {
+    "grants": [
+      { "resource_type": "datastore_table", "resource_name": "tickets", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "messages", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "drafts", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "datastore_table", "resource_name": "ticket_events", "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+      { "resource_type": "folder", "resource_name": "/knowledge", "permission_ids": ["folder.read"] }
+    ]
+  }
+}

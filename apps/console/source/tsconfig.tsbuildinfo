@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/lib/format.ts","./src/lib/lemmaclient.ts","./src/lib/poddata.ts","./src/lib/router.ts","./src/lib/ui.tsx","./src/pages/assistantpage.tsx","./src/pages/knowledgepage.tsx","./src/pages/newticketpage.tsx","./src/pages/queuepage.tsx","./src/pages/reviewpage.tsx","./src/pages/ticketpage.tsx"],"version":"5.9.3"}

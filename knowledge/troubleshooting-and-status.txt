@@ -1,0 +1,24 @@
+Troubleshooting & Status
+========================
+
+Service status
+- Live status and incident history are at status.example.com. Subscribe there for incident emails.
+- During a confirmed incident, the in-app banner links to the status page; we post updates every 30 minutes.
+
+Dashboards not loading / stale data
+- First try a hard refresh and a different network. Most "stuck" dashboards are a cached browser session.
+- Data sync runs every 15 minutes by default. If a connected source is behind, check
+  Settings > Sources for the last sync time and any error on that source.
+- A red dot on a source means the connection's credentials expired; reconnect from that source's page.
+
+Charts showing wrong numbers
+- Confirm the date range and timezone (Settings > Workspace > Timezone). Numbers are computed in the
+  workspace timezone, which can differ from your local time.
+- Filters are sticky per dashboard. A surprising number is often a filter left applied from earlier.
+
+Reporting a bug
+- Include: what you expected, what happened, the dashboard or URL, and the time it occurred (with timezone).
+- Screenshots and the browser console log speed up diagnosis a lot.
+
+Performance
+- Dashboards with 20+ widgets render slower; splitting into focused dashboards is the recommended fix.

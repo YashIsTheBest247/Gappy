@@ -1,0 +1,8 @@
+{
+  "name": "console",
+  "display_name": "Support Desk Console",
+  "description": "The team console for the AI Support Desk: live queue, review-and-approve drafts, knowledge base, and an embedded read-only assistant.",
+  "type": "vite",
+  "entry": "source",
+  "nav": "sidebar"
+}
