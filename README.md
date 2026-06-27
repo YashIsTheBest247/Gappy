@@ -37,29 +37,39 @@ All of step 2–4 happens **autonomously the moment a ticket arrives** — no hu
 
 ---
 
-##  Features
+## Features
 
-**Agentic core**
--  **Triage agent** — category, priority, sentiment, tags, auto-escalation
--  **Draft agent** — doc-grounded replies with real citations (RAG over your `/knowledge` store)
--  **Reply-Coach QA agent** — a second AI grades every draft (score, tone, grounding, issues, suggestion)
--  **Human-in-the-loop approval** with inline editing and "send back for re-draft"
+**Multi-agent core**
+- **Triage agent** — category, priority, sentiment, tags, auto-escalation
+- **Draft agent** — doc-grounded replies with real citations (RAG over your `/knowledge` store)
+- **Reply-Coach QA agent** — a second, independent AI grades every draft (0–100 score, ship / revise / escalate verdict, tone, grounding, issues, suggestion)
+- **Human-in-the-loop approval** with inline editing, canned-reply macros, and "send back for re-draft"
 
 **Autonomy**
--  **Fully autonomous pipeline** — a datastore schedule runs triage → draft → QA the instant any ticket is created
--  **Autopilot** — one click auto-sends every draft the QA agent rated *ship* (≥90); humans only handle the rest
--  **Live Telegram agent** ([@tend_support_bot](https://t.me/tend_support_bot)) — a customer-facing agent answers from your docs and logs tickets into the desk
+- **Fully autonomous pipeline** — a datastore schedule runs triage → draft → QA the instant any ticket arrives, from any source, with no human trigger
+- **Autopilot** — one click auto-sends every draft the QA agent rated *ship* (≥90); humans only handle the rest
+- **SLA auto-escalation** — a cron job escalates any open ticket past its SLA
+- **Daily Briefing** — a `digest` agent writes an executive summary of the whole desk, on a 9 am cron and on-demand, alongside a live activity feed
 
-**Intelligence & product**
--  **Insights dashboard** — resolution rate, first-response time, SLA-at-risk, avg AI confidence, avg QA score, ship-rate, and breakdowns by category / priority / sentiment / status
--  **Knowledge Gaps** — surfaces low-confidence topics so you know which docs to write
--  **Self-improving knowledge base** — the `kb-writer` agent drafts a new article from an unanswered ticket and publishes it back into the RAG store
--  **Similar tickets** + **SLA tracking** with at-risk highlighting
+**Channels & intake**
+- **Live Telegram agent** ([@tend_support_bot](https://t.me/tend_support_bot)) — a customer-facing agent answers from your docs and logs tickets straight into the desk
+- **Multimodal intake** — drop a PDF, email, or screenshot on the New Ticket form; the `intake-parser` agent extracts a clean ticket from it
+- Email, in-app form, and Slack all feed the same pipeline
 
-**Craft**
-- ⌘K **command palette** (search tickets, navigate, run actions)
--  Dark mode (flash-free, set pre-paint), fully responsive, smooth page transitions & staggered entrances, `prefers-reduced-motion` aware
--  Soft pastel design system with colored KPI cards and a custom logo
+**Intelligence**
+- **Insights dashboard** — resolution rate, first-response time, SLA-at-risk, avg AI confidence, avg QA score, ship-rate, avg CSAT, AI-performance throughput, and breakdowns by category / priority / sentiment / status
+- **Knowledge Gaps** — surfaces low-confidence topics so you know which docs to write
+- **Self-improving knowledge base** — the `kb-writer` agent drafts a new article from an unanswered ticket and publishes it back into the RAG store, so the next identical question answers itself
+- **Customers (CRM)** — every ticket grouped by person, with history, repeat-contact and at-risk flags
+- **CSAT** — capture a 1–5 customer rating per ticket; surfaced on Insights
+- **Similar tickets** + **SLA tracking** with at-risk highlighting
+
+**Operator UX**
+- **⌘K command palette** — search tickets, navigate, run actions
+- **Bulk actions** — multi-select tickets to escalate or re-run the AI
+- **Assignment** — assign tickets to yourself, plus a "Mine" queue filter
+- **Concierge assistant** — a read-only AI you can ask about the queue or docs
+- Dark mode (flash-free), fully responsive, smooth transitions, `prefers-reduced-motion` aware, soft pastel design system with a custom logo
 
 ---
 
@@ -93,14 +103,14 @@ Tend is a single **Lemma pod** — `support-desk` — that uses essentially the 
 
 | Lemma primitive | Used for |
 |---|---|
-| **Tables** (5) | `tickets`, `messages`, `drafts`, `ticket_events`, `quality` |
-| **Files / RAG** | `/knowledge` document store the draft & coach agents ground in (and the kb-writer publishes to) |
-| **Agents** (6) | `triage-agent`, `draft-agent`, `reply-coach`, `kb-writer`, `frontline`, `concierge` |
-| **Functions** (7) | `intake_ticket`, `apply_triage`, `save_draft`, `decide_reply`, `escalate_ticket`, `save_quality`, `publish_kb` |
-| **Workflows** (3) | `intake` (manual re-run), `auto_intake` (schedule-driven), `write_kb` |
-| **Schedule** | datastore trigger on `tickets` insert → `auto_intake` (the autonomy) |
-| **Surface** | live **Telegram** bot bound to the `frontline` agent |
-| **App** | Vite + React + `lemma-sdk` console (the UI you see) |
+| **Tables** (8) | `tickets`, `messages`, `drafts`, `ticket_events`, `quality`, `reports`, `csat`, `macros` |
+| **Files / RAG** | `/knowledge` (self-improving doc store the agents ground in) + `/inbox` (multimodal uploads) |
+| **Agents** (8) | `triage-agent`, `draft-agent`, `reply-coach`, `kb-writer`, `frontline`, `concierge`, `digest`, `intake-parser` |
+| **Functions** (11) | `intake_ticket`, `apply_triage`, `save_draft`, `decide_reply`, `escalate_ticket`, `save_quality`, `publish_kb`, `save_digest`, `sla_sweep`, `record_csat`, `assign_ticket` |
+| **Workflows** (6) | `intake`, `auto_intake`, `write_kb`, `daily_digest`, `sla_sweep`, `parse_intake` |
+| **Schedules** (3) | a DATASTORE trigger (`auto-intake`, the autonomy) + two TIME crons (`daily-briefing` 9 am, `sla-sweep` every 30 min) |
+| **Surface** | live **Telegram** bot ([@tend_support_bot](https://t.me/tend_support_bot)) bound to the `frontline` agent |
+| **App** | Vite + React + `lemma-sdk` console — 9 pages (Queue, Review, Insights, Customers, Briefing, Knowledge, Assistant, New ticket, Ticket detail) |
 
 Full detail in **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
@@ -131,18 +141,31 @@ lemma --pod support-desk pods import .
 ```
 
 ### 3. Apply grants (important)
-Lemma's bundle import creates agents/functions but **does not apply their `permissions.grants`** — apply them server-side:
+Lemma's bundle import creates agents/functions but **does not apply their `permissions.grants`** — apply them server-side from the payloads in [`grants/`](grants/):
 ```bash
-lemma agents    permissions replace triage-agent -f grants/triage.json
-lemma agents    permissions replace draft-agent  -f grants/draft.json
-lemma agents    permissions replace reply-coach  -f grants/coach.json
-lemma agents    permissions replace kb-writer    -f grants/kbwriter.json
-lemma agents    permissions replace concierge    -f grants/concierge.json
-lemma agents    permissions replace frontline    -f grants/frontline.json
-lemma functions permissions replace intake_ticket -f grants/allfn.json   # repeat per function
-lemma functions permissions replace publish_kb    -f grants/publishkb.json
+# agents
+lemma agents    permissions replace triage-agent  -f grants/triage.json
+lemma agents    permissions replace draft-agent   -f grants/draft.json
+lemma agents    permissions replace reply-coach   -f grants/coach.json
+lemma agents    permissions replace kb-writer     -f grants/kbwriter.json
+lemma agents    permissions replace concierge     -f grants/concierge.json
+lemma agents    permissions replace frontline     -f grants/frontline.json
+lemma agents    permissions replace digest        -f grants/digest.json
+lemma agents    permissions replace intake-parser -f grants/parser.json
+# functions (the data-writing functions share grants/allfn.json; specialised ones have their own)
+lemma functions permissions replace intake_ticket  -f grants/allfn.json
+lemma functions permissions replace apply_triage   -f grants/allfn.json
+lemma functions permissions replace save_draft     -f grants/allfn.json
+lemma functions permissions replace decide_reply   -f grants/allfn.json
+lemma functions permissions replace escalate_ticket -f grants/allfn.json
+lemma functions permissions replace save_quality   -f grants/savequality.json
+lemma functions permissions replace publish_kb     -f grants/publishkb.json
+lemma functions permissions replace save_digest    -f grants/savedigest.json
+lemma functions permissions replace sla_sweep      -f grants/slasweep.json
+lemma functions permissions replace record_csat    -f grants/recordcsat.json
+lemma functions permissions replace assign_ticket  -f grants/assign.json
 ```
-*(Grant payloads live in [`grants/`](grants/). See ARCHITECTURE.md for the exact map.)*
+> Tip: re-importing a resource wipes its grants — reapply after any import.
 
 ### 4. Upload the knowledge base (RAG)
 ```bash
@@ -150,12 +173,20 @@ lemma file mkdir /knowledge
 for f in knowledge/*.txt; do lemma file upload "$f" "/knowledge/$(basename "$f")"; done
 ```
 
-### 5. Turn on autonomy + the live channel
+### 5. Turn on autonomy, automations + the live channel
 ```bash
+# multimodal uploads land in /inbox
+lemma file mkdir /inbox
+
 # autonomous pipeline: run auto_intake whenever a ticket is inserted
-lemma schedules create --workflow auto_intake --datastore tickets --on insert --name auto-intake
-# live Telegram agent
-lemma surfaces upsert TELEGRAM --agent frontline --credential-mode SYSTEM --enabled
+lemma schedules create --workflow auto_intake  --datastore tickets --on insert --name auto-intake
+# daily executive briefing at 9am
+lemma schedules create --workflow daily_digest --cron "0 9 * * *"   --name daily-briefing
+# SLA enforcement every 30 minutes
+lemma schedules create --workflow sla_sweep    --cron "*/30 * * * *" --name sla-sweep
+
+# live Telegram agent (use a BotFather bot token via the dashboard for a public handle)
+lemma surfaces upsert TELEGRAM --agent frontline --credential-mode CUSTOM --account <telegram-account-id> --enabled
 lemma surfaces setup TELEGRAM
 ```
 
@@ -177,16 +208,17 @@ bash seed/seed.sh
 ```
 support-desk/
 ├── pod.json
-├── tables/            # tickets, messages, drafts, ticket_events, quality
-├── functions/         # *.json + code.py  (7 Python functions)
-├── agents/            # *.json + instruction.txt  (6 agents)
-├── workflows/         # intake, auto_intake, write_kb
+├── tables/            # tickets, messages, drafts, ticket_events, quality, reports, csat, macros
+├── functions/         # *.json + code.py  (11 Python functions)
+├── agents/            # *.json + instruction.txt  (8 agents)
+├── workflows/         # intake, auto_intake, write_kb, daily_digest, sla_sweep, parse_intake
 ├── knowledge/         # .txt KB docs (RAG source)
-├── seed/seed.sh
+├── grants/            # server-side permission payloads (applied after import)
+├── seed/              # seed.sh + a sample inbound document
 └── apps/console/source/   # Vite + React + lemma-sdk app
     └── src/
         ├── lib/        # lemmaClient, podData (hooks), router, ui, toast, CommandPalette, Logo
-        └── pages/      # Queue, Review, Ticket, Insights, Knowledge, Assistant, NewTicket
+        └── pages/      # Queue, Review, Ticket, Insights, Customers, Briefing, Knowledge, Assistant, NewTicket
 ```
 
 ---

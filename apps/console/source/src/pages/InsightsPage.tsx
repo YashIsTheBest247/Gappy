@@ -1,5 +1,5 @@
 import React from "react";
-import { useTickets, useAllQuality, useAllCsat, Ticket } from "../lib/podData";
+import { useTickets, useAllQuality, useAllCsat, useLiveEvents, Ticket } from "../lib/podData";
 import { Card, Stat, Loading, Empty, Badge } from "../lib/ui";
 import { CATEGORY_LABEL, STATUS_LABEL } from "../lib/format";
 import { go } from "../lib/router";
@@ -46,8 +46,22 @@ export default function InsightsPage() {
   const { tickets, isLoading } = useTickets();
   const { quality } = useAllQuality();
   const { csat } = useAllCsat();
+  const { events } = useLiveEvents(400);
 
   if (isLoading) return <Loading label="Crunching insights" />;
+
+  const ev = (k: string) => events.filter((e) => e.kind === k).length;
+  const sent = ev("sent");
+  const rejected = ev("rejected");
+  const acceptance = sent + rejected > 0 ? Math.round((sent / (sent + rejected)) * 100) : null;
+  const perf: [string, React.ReactNode][] = [
+    ["Triaged", ev("triaged")],
+    ["Drafted", ev("drafted")],
+    ["QA-graded", quality.length],
+    ["Replies sent", sent],
+    ["Auto-escalated", ev("escalated")],
+    ["Draft acceptance", acceptance != null ? `${acceptance}%` : "—"],
+  ];
 
   const rated = csat.filter((c) => typeof c.rating === "number");
   const avgCsat = rated.length ? rated.reduce((s, c) => s + (c.rating ?? 0), 0) / rated.length : null;
@@ -122,6 +136,19 @@ export default function InsightsPage() {
                 <div className="chan-name">{c.name}</div>
                 <div className="chan-sub">{c.sub}</div>
               </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card style={{ marginBottom: 20 }}>
+        <h3 style={{ fontSize: 18, marginBottom: 4 }}>AI performance</h3>
+        <p className="muted-text" style={{ fontSize: 13, marginBottom: 16 }}>What the agents did across the whole desk.</p>
+        <div className="chan-grid">
+          {perf.map(([label, val]) => (
+            <div key={String(label)} className="card muted compact" style={{ padding: "14px 16px", borderRadius: 14 }}>
+              <div className="stat-cap" style={{ marginBottom: 6 }}>{label}</div>
+              <div className="stat-num" style={{ fontSize: 26 }}>{val}</div>
             </div>
           ))}
         </div>

@@ -1,0 +1,5 @@
+{
+  "grants": [
+    { "resource_type": "datastore_table", "resource_name": "reports", "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
+  ]
+}

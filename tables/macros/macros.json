@@ -1,0 +1,10 @@
+{
+  "name": "macros",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "columns": [
+    { "name": "name", "type": "TEXT", "required": true, "description": "Short label for the canned reply." },
+    { "name": "body", "type": "TEXT", "required": true, "description": "The reply text to insert into a draft." },
+    { "name": "category", "type": "TEXT", "description": "Optional grouping (billing, account, etc.)." }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "grants": [
+    { "resource_type": "folder", "resource_name": "/inbox", "permission_ids": ["folder.read"] }
+  ]
+}

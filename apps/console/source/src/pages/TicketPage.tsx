@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, useWriteKbWorkflow, useTickets, useQuality, useCsat, Draft, Ticket,
+  useTicket, useMessages, useDrafts, useEvents, useFunctionRunner, useIntakeWorkflow, useWriteKbWorkflow, useTickets, useQuality, useCsat, useMacros, useMe, Draft, Ticket,
 } from "../lib/podData";
 import { Card, Btn, Badge, StatusPill, PriorityTag, CategoryTag, Avatar, Loading, Empty } from "../lib/ui";
 import { go } from "../lib/router";
@@ -32,6 +32,7 @@ function Conversation({ ticketId }: { ticketId: string }) {
 
 function DraftPanel({ ticketId, draft }: { ticketId: string; draft: Draft | null }) {
   const decide = useFunctionRunner("decide_reply");
+  const { macros } = useMacros();
   const [body, setBody] = useState(draft?.body ?? "");
   const [notes, setNotes] = useState("");
   const [done, setDone] = useState<string | null>(null);
@@ -87,6 +88,15 @@ function DraftPanel({ ticketId, draft }: { ticketId: string; draft: Draft | null
         <span className="muted-text" style={{ fontSize: 12 }}>{timeAgo(d.created_at)}</span>
       </div>
 
+      {macros.length > 0 && (
+        <div className="wrap" style={{ marginBottom: 10 }}>
+          <span className="muted-text" style={{ fontSize: 12 }}>Insert macro:</span>
+          {macros.map((m) => (
+            <button key={m.id} className="btn btn-soft btn-sm"
+              onClick={() => setBody((b) => (b.trim() ? b.trim() + "\n\n" : "") + m.body)}>{m.name}</button>
+          ))}
+        </div>
+      )}
       <textarea className="textarea" value={body} onChange={(e) => setBody(e.target.value)} />
 
       {d.citations && d.citations.length > 0 && (
@@ -258,6 +268,8 @@ export default function TicketPage({ id }: { id: string }) {
   const escalate = useFunctionRunner("escalate_ticket");
   const wf = useIntakeWorkflow();
   const kb = useWriteKbWorkflow();
+  const me = useMe();
+  const assign = useFunctionRunner("assign_ticket");
   const latest = drafts[0] ?? null;
   const sla = slaState(ticket?.sla_due_at);
 
@@ -286,6 +298,14 @@ export default function TicketPage({ id }: { id: string }) {
           <Btn variant="soft" size="sm" disabled={kb.starting}
                onClick={async () => { try { await kb.start(ticket.id); toast("AI is writing a KB article from this ticket…", "ok"); } catch { toast("Couldn't start the KB writer.", "err"); } }}>
             {kb.starting ? "Writing…" : "Write KB article"}
+          </Btn>
+          <Btn variant="soft" size="sm" disabled={assign.busy}
+               onClick={async () => {
+                 const mine = ticket.assignee_user_id === me.id;
+                 await assign.run({ ticket_id: ticket.id, user_id: mine ? null : me.id, assignee_name: me.me?.first_name || me.me?.email });
+                 toast(mine ? "Unassigned" : "Assigned to you", "ok");
+               }}>
+            {ticket.assignee_user_id && ticket.assignee_user_id === me.id ? "Assigned to you" : "Assign to me"}
           </Btn>
           <Btn variant="ghost" size="sm" disabled={escalate.busy}
                onClick={async () => { await escalate.run({ ticket_id: ticket.id, reason: "Manually escalated from console." }); toast("Ticket escalated", "info"); }}>

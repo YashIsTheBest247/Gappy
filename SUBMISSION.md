@@ -34,7 +34,7 @@ Two things make it stand out:
    **writes a new KB article** and publishes it back into the RAG store — so the next identical question
    answers automatically.
 
-## How to try it (for judges)
+## How to try it
 
 - **Hosted app:** https://console.apps.lemma.work *(hosted on lemma.work; pod access shared with `ayush@gappy.ai`)*
 - **Live Telegram bot:** **[@tend_support_bot](https://t.me/tend_support_bot)** — DM it a support question (e.g. *"I was charged twice, can I get a refund?"*). It answers from the knowledge base, and the ticket appears in Tend within ~30s, already triaged, drafted, and QA-graded.

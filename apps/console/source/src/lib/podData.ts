@@ -9,6 +9,7 @@ import {
   useFileSearch,
   useWorkflowStart,
   useUploadFile,
+  useCurrentUser,
 } from "lemma-sdk/react";
 import { client, podId } from "./lemmaClient";
 
@@ -17,6 +18,7 @@ export type Ticket = {
   channel: string; customer_name?: string; customer_email?: string;
   status: string; priority?: string; category?: string; sentiment?: string;
   summary?: string; tags?: string[]; related_ticket_id?: string | null;
+  assignee_user_id?: string | null;
   confidence?: number; sla_due_at?: string | null; first_response_at?: string | null;
   resolved_at?: string | null; created_at?: string;
 };
@@ -40,6 +42,7 @@ export type Report = {
   id: string; headline?: string; body?: string; highlights?: string[]; period?: string; created_at?: string;
 };
 export type Csat = { id: string; ticket_id: string; rating?: number; comment?: string; created_at?: string };
+export type Macro = { id: string; name: string; body: string; category?: string };
 
 type Filter = { field: string; op: string; value?: unknown };
 const byTicket = (ticketId: string): Filter[] => [{ field: "ticket_id", op: "eq", value: ticketId }];
@@ -143,6 +146,18 @@ export function useQuality(ticketId?: string) {
 export function useAllQuality() {
   const { records, isLoading } = useRecords<Quality>({ client, podId, tableName: "quality", limit: 500 });
   return { quality: records ?? [], isLoading };
+}
+
+/** The signed-in user (for assignment / "my tickets"). */
+export function useMe() {
+  const { user } = useCurrentUser({ client });
+  return { me: user as any, id: (user as any)?.id as string | undefined };
+}
+
+/** Canned reply macros. */
+export function useMacros() {
+  const { records } = useRecords<Macro>({ client, podId, tableName: "macros", limit: 50, sort: [{ field: "name", direction: "asc" }] });
+  return { macros: records ?? [] };
 }
 
 /** CSAT for one ticket (latest). */

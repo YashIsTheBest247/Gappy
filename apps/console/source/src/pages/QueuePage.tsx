@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTickets, useFunctionRunner, useIntakeWorkflow, Ticket } from "../lib/podData";
+import { useTickets, useFunctionRunner, useIntakeWorkflow, useMe, Ticket } from "../lib/podData";
 import { Card, Stat, StatusPill, PriorityTag, Badge, Btn, Loading, Empty } from "../lib/ui";
 import { go } from "../lib/router";
 import { toast } from "../lib/toast";
@@ -50,7 +50,9 @@ export default function QueuePage() {
   const [priority, setPriority] = useState("all");
   const [query, setQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
+  const [mineOnly, setMineOnly] = useState(false);
   const [sel, setSel] = useState<Set<string>>(new Set());
+  const me = useMe();
   const escalate = useFunctionRunner("escalate_ticket");
   const wf = useIntakeWorkflow();
 
@@ -76,6 +78,7 @@ export default function QueuePage() {
   const q = query.trim().toLowerCase();
   const shown = tickets
     .filter(active.match)
+    .filter((t) => !mineOnly || (me.id && t.assignee_user_id === me.id))
     .filter((t) => priority === "all" || t.priority === priority)
     .filter((t) =>
       !q ||
@@ -126,6 +129,7 @@ export default function QueuePage() {
           ))}
         </div>
         <div className="wrap">
+          <button className={`btn btn-sm ${mineOnly ? "btn-accent" : "btn-soft"}`} onClick={() => setMineOnly((m) => !m)}>Mine</button>
           {["all", "urgent", "high", "normal", "low"].map((p) => (
             <button
               key={p}
